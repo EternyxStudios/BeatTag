@@ -1099,8 +1099,7 @@ function challengeCard(c) {
 /* =========================
    LIKE / DISLIKE
 ========================= */
-
-function react(id, type) {
+async function react(id, type) {
 
   const c =
     state.challenges.find(
@@ -1109,42 +1108,92 @@ function react(id, type) {
 
   if (!c) return;
 
-  const pid =
-    state.currentProfile;
+  try {
 
-  c.likes ||= {};
-  c.dislikes ||= {};
+    const {
+      data: { user },
+      error: userError
+    } =
+      await supabaseClient.auth.getUser();
 
-  if (type === 'like') {
+    if (userError) {
+      throw userError;
+    }
 
-    if (c.likes[pid]) {
+    if (!user) {
+      toast('Pehle login karo.');
+      return;
+    }
 
-      delete c.likes[pid];
+    const {
+      data: existing,
+      error: checkError
+    } =
+      await supabaseClient
+        .from('reactions')
+        .select('*')
+        .eq('challenge_id', id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+    if (checkError) {
+      throw checkError;
+    }
+
+    if (
+      existing &&
+      existing.reaction_type === type
+    ) {
+
+      const { error: deleteError } =
+        await supabaseClient
+          .from('reactions')
+          .delete()
+          .eq('challenge_id', id)
+          .eq('user_id', user.id);
+
+      if (deleteError) {
+        throw deleteError;
+      }
 
     } else {
 
-      c.likes[pid] = true;
+      const { error: upsertError } =
+        await supabaseClient
+          .from('reactions')
+          .upsert(
+            {
+              challenge_id: id,
+              user_id: user.id,
+              reaction_type: type
+            },
+            {
+              onConflict:
+                'challenge_id,user_id'
+            }
+          );
 
-      delete c.dislikes[pid];
+      if (upsertError) {
+        throw upsertError;
+      }
     }
 
-  } else {
+    await loadReactionsFromSupabase();
 
-    if (c.dislikes[pid]) {
+    go('home');
 
-      delete c.dislikes[pid];
+  } catch (err) {
 
-    } else {
+    console.error(
+      'Reaction error:',
+      err
+    );
 
-      c.dislikes[pid] = true;
-
-      delete c.likes[pid];
-    }
+    toast(
+      err.message ||
+      'Reaction save nahi hua.'
+    );
   }
-
-  save();
-
-  go('home');
 }
 
 
