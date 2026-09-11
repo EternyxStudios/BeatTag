@@ -881,3 +881,100 @@ main{
     gap:9px;
   }
 }
+/* =========================
+   AUTH LOGIN / SIGNUP
+========================= */
+
+.auth-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background:
+    radial-gradient(circle at top, rgba(140, 60, 255, 0.22), transparent 35%),
+    #09070f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.auth-screen.hidden {
+  display: none;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: rgba(20, 15, 30, 0.96);
+  border: 1px solid rgba(190, 90, 255, 0.25);
+  border-radius: 28px;
+  padding: 28px 22px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+}
+
+.auth-logo {
+  font-size: 32px;
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 18px;
+  color: white;
+}
+
+.auth-logo span {
+  color: #d936ff;
+}
+
+.auth-card h2 {
+  text-align: center;
+  margin: 0 0 22px;
+  font-size: 28px;
+}
+
+.auth-card input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 15px 16px;
+  margin-bottom: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: #15101f;
+  color: white;
+  font-size: 16px;
+  outline: none;
+}
+
+.auth-card input:focus {
+  border-color: #b53cff;
+}
+
+.auth-card .primary {
+  width: 100%;
+  margin-top: 6px;
+  padding: 15px;
+  border: 0;
+  border-radius: 16px;
+  font-size: 17px;
+  font-weight: 800;
+  color: white;
+  background: linear-gradient(90deg, #7c3cff, #ff27c9);
+}
+
+.auth-switch {
+  width: 100%;
+  margin-top: 14px;
+  background: transparent;
+  border: 0;
+  color: #caa8ff;
+  font-size: 14px;
+}
+
+#authMessage {
+  min-height: 20px;
+  text-align: center;
+  font-size: 14px;
+  margin: 12px 0 0;
+}
+
+.auth-only-signup.hidden {
+  display: none;
+}
