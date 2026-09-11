@@ -1,0 +1,11 @@
+<!doctype html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>BeatTag</title><link rel='stylesheet' href='styles.css'></head><body>
+<header><b>BEAT<span>TAG</span></b><div>🪙 <strong id='coins'>250</strong></div></header>
+<main>
+<section class='hero'><h1>Beat it. Tag them.<br>Keep it going.</h1><p>Create any challenge, beat your friends, and grow the chain.</p><button onclick="openCreate()">＋ Create Challenge</button></section>
+<nav><button onclick="filterFeed('all')">For You</button><button onclick="filterFeed('trending')">🔥 Trending</button><button onclick="showShop()">🛍️ Coin Shop</button></nav>
+<section id='feed'></section>
+</main>
+<div class='bottom'><button>⌂<small>Home</small></button><button>⌕<small>Explore</small></button><button class='plus' onclick="openCreate()">＋</button><button>⛓<small>Chains</small></button><button>☺<small>Profile</small></button></div>
+<dialog id='create'><form method='dialog'><h2>Create a Challenge 🔥</h2><input id='title' placeholder='Challenge title' required><textarea id='desc' placeholder='What should your friend beat or do?'></textarea><select id='type'><option>📸 Photo</option><option>🎥 Video</option><option>🎵 Audio / Music</option><option>✍️ Text</option><option>🎮 Gaming</option><option>✨ Anything</option></select><input id='friend' placeholder='Tag friend name'><div class='actions'><button value='cancel'>Cancel</button><button type='button' onclick='createChallenge()'>Post & Tag</button></div></form></dialog>
+<dialog id='shop'><form method='dialog'><h2>🛍️ Coin Shop</h2><p>Core BeatTag stays free. Coins unlock fun collectibles.</p><div id='items'></div><button>Close</button></form></dialog>
+<script src='app.js'></script></body></html>
