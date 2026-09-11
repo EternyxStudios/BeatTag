@@ -147,6 +147,7 @@ async function initAuth() {
   } = await supabaseClient.auth.getSession();
 
   if (session) {
+    await loadRealProfile();
     showApp();
   } else {
     showAuthScreen();
