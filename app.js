@@ -149,6 +149,7 @@ async function initAuth() {
   if (session) {
     await loadRealProfile();
     await loadChallengesFromSupabase();
+    await loadReactionsFromSupabase();
     showApp();
   } else {
     showAuthScreen();
@@ -217,6 +218,51 @@ async function loadRealProfile() {
     }
   } catch (err) {
     console.error("Profile error:", err);
+  }
+}
+async function loadReactionsFromSupabase() {
+  try {
+    const { data: reactions, error } =
+      await supabaseClient
+        .from('reactions')
+        .select('*');
+
+    if (error) throw error;
+
+    state.challenges.forEach(c => {
+      c.likes = {};
+      c.dislikes = {};
+    });
+
+    (reactions || []).forEach(r => {
+      const challenge =
+        state.challenges.find(
+          c => c.id === r.challenge_id
+        );
+
+      if (!challenge) return;
+
+      if (r.reaction_type === 'like') {
+        challenge.likes[r.user_id] = true;
+      }
+
+      if (r.reaction_type === 'dislike') {
+        challenge.dislikes[r.user_id] = true;
+      }
+    });
+
+    save();
+
+    console.log(
+      'Supabase reactions loaded:',
+      reactions?.length || 0
+    );
+
+  } catch (err) {
+    console.error(
+      'loadReactionsFromSupabase error:',
+      err
+    );
   }
 }
 async function loadChallengesFromSupabase() {
