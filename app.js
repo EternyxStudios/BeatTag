@@ -150,6 +150,7 @@ async function initAuth() {
     await loadRealProfile();
     await loadChallengesFromSupabase();
     await loadReactionsFromSupabase();
+    await loadCommentsFromSupabase();
     showApp();
   } else {
     showAuthScreen();
@@ -261,6 +262,78 @@ async function loadReactionsFromSupabase() {
   } catch (err) {
     console.error(
       'loadReactionsFromSupabase error:',
+      err
+    );
+  }
+}
+async function loadCommentsFromSupabase() {
+  try {
+    const { data: comments, error } =
+      await supabaseClient
+        .from('comments')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    const userIds = [
+      ...new Set(
+        (comments || [])
+          .map(c => c.user_id)
+          .filter(Boolean)
+      )
+    ];
+
+    let profileMap = {};
+
+    if (userIds.length) {
+      const { data: profiles } =
+        await supabaseClient
+          .from('profiles')
+          .select('id,name,username')
+          .in('id', userIds);
+
+      (profiles || []).forEach(p => {
+        profileMap[p.id] = p;
+      });
+    }
+
+    state.challenges.forEach(c => {
+      c.comments = [];
+    });
+
+    (comments || []).forEach(item => {
+      const challenge =
+        state.challenges.find(
+          c => c.id === item.challenge_id
+        );
+
+      if (!challenge) return;
+
+      const p = profileMap[item.user_id];
+
+      challenge.comments.push({
+        profile: item.user_id,
+        name:
+          p?.name ||
+          p?.username ||
+          'BeatTag User',
+        text: item.text,
+        time:
+          new Date(item.created_at).getTime()
+      });
+    });
+
+    save();
+
+    console.log(
+      'Supabase comments loaded:',
+      comments?.length || 0
+    );
+
+  } catch (err) {
+    console.error(
+      'loadCommentsFromSupabase error:',
       err
     );
   }
@@ -2555,52 +2628,53 @@ function openComments(id) {
   `;
 }
 
-function addComment(id) {
-
-  const field =
-    $('#commentText');
-
+async function addComment(id) {
+  const field = $('#commentText');
   if (!field) return;
 
-  const txt =
-    field.value.trim();
+  const txt = field.value.trim();
 
   if (!txt) {
-
-    toast(
-      'Comment likho.'
-    );
-
+    toast('Comment likho.');
     return;
   }
 
-  const c =
-    state.challenges.find(
-      x => x.id === id
+  try {
+    const {
+      data: { user },
+      error: userError
+    } = await supabaseClient.auth.getUser();
+
+    if (userError) throw userError;
+
+    if (!user) {
+      toast('Pehle login karo.');
+      return;
+    }
+
+    const { error } = await supabaseClient
+      .from('comments')
+      .insert({
+        challenge_id: id,
+        user_id: user.id,
+        text: txt
+      });
+
+    if (error) throw error;
+
+    field.value = '';
+
+    await loadCommentsFromSupabase();
+
+    openComments(id);
+
+  } catch (err) {
+    console.error('Comment error:', err);
+    toast(
+      err.message ||
+      'Comment save nahi hua.'
     );
-
-  if (!c) return;
-
-  c.comments ||= [];
-
-  c.comments.push({
-
-    profile:
-      state.currentProfile,
-
-    name:
-      profile().name,
-
-    text:
-      txt,
-
-    time:
-      Date.now()
-  });
-
-  save();
-
-  openComments(id);
+  }
 }
 
 function closeModal() {
