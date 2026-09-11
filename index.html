@@ -4,63 +4,192 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#0b0713" />
+
   <title>BeatTag</title>
+
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg">
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
+
 <div id="app">
+
+  <!-- TOP HEADER -->
   <header class="topbar">
-    <div class="brand" onclick="go('home')">BEAT<span>TAG</span></div>
-    <div class="top-actions">
-      <button class="coin-pill" onclick="go('shop')">🪙 <span id="coinCount">0</span></button>
-      <button class="icon-btn" onclick="openNotifications()">🔔<span id="notifDot" class="dot hidden"></span></button>
+
+    <div class="brand" onclick="go('home')">
+      BEAT<span>TAG</span>
     </div>
+
+    <div class="top-actions">
+
+      <button class="coin-pill" onclick="go('shop')">
+        🪙 <span id="coinCount">0</span>
+      </button>
+
+      <button class="icon-btn" onclick="openNotifications()">
+        🔔
+        <span id="notifDot" class="dot hidden"></span>
+      </button>
+
+    </div>
+
   </header>
 
+
+  <!-- MAIN SCREEN -->
   <main id="screen"></main>
 
+
+  <!-- BOTTOM NAVIGATION -->
   <nav class="bottom-nav">
-    <button data-tab="home" onclick="go('home')"><span>⌂</span><small>Home</small></button>
-    <button data-tab="explore" onclick="go('explore')"><span>⌕</span><small>Explore</small></button>
-    <button class="create-nav" data-tab="create" onclick="go('create')"><span>＋</span></button>
-    <button data-tab="chains" onclick="go('chains')"><span>⛓</span><small>Chains</small></button>
-    <button data-tab="profile" onclick="go('profile')"><span>☺</span><small>Profile</small></button>
+
+    <button
+      data-tab="home"
+      onclick="go('home')">
+      <span>⌂</span>
+      <small>Home</small>
+    </button>
+
+    <button
+      data-tab="explore"
+      onclick="go('explore')">
+      <span>⌕</span>
+      <small>Explore</small>
+    </button>
+
+    <button
+      data-tab="featured"
+      onclick="go('featured')">
+      <span>⭐</span>
+      <small>Featured</small>
+    </button>
+
+    <button
+      class="create-nav"
+      data-tab="create"
+      onclick="go('create')">
+      <span>＋</span>
+    </button>
+
+    <button
+      data-tab="chains"
+      onclick="go('chains')">
+      <span>⛓</span>
+      <small>Chains</small>
+    </button>
+
+    <button
+      data-tab="shop"
+      onclick="go('shop')">
+      <span>🛍</span>
+      <small>Shop</small>
+    </button>
+
+    <button
+      data-tab="profile"
+      onclick="go('profile')">
+      <span>☺</span>
+      <small>Profile</small>
+    </button>
+
   </nav>
+
 </div>
 
+
+<!-- MODAL -->
 <div id="modal" class="modal hidden">
   <div class="modal-card" id="modalCard"></div>
 </div>
 
+
+<!-- CHALLENGE CARD TEMPLATE -->
 <template id="challengeCardTpl">
+
   <article class="challenge-card">
+
     <div class="card-head">
-      <div class="avatar">M</div>
-      <div class="userline">
-        <strong class="creatorName">User</strong>
-        <span class="meta"></span>
+
+      <div class="avatar">
+        M
       </div>
-      <button class="dots">•••</button>
+
+      <div class="userline">
+
+        <strong class="creatorName">
+          User
+        </strong>
+
+        <span class="meta"></span>
+
+      </div>
+
+      <button class="dots">
+        •••
+      </button>
+
     </div>
+
+
     <div class="challenge-title"></div>
+
+
     <div class="media-wrap"></div>
+
+
     <div class="reaction-row">
-      <button class="react likeBtn">❤️ <span>0</span></button>
-      <button class="react dislikeBtn">👎 <span>0</span></button>
-      <button class="react commentBtn">💬 <span>0</span></button>
-      <button class="shareBtn">↗</button>
+
+      <button class="react likeBtn">
+        ❤️ <span>0</span>
+      </button>
+
+      <button class="react dislikeBtn">
+        👎 <span>0</span>
+      </button>
+
+      <button class="react commentBtn">
+        💬 <span>0</span>
+      </button>
+
+      <button class="shareBtn">
+        ↗
+      </button>
+
     </div>
+
+
     <div class="action-row">
-      <button class="primary beatBtn">🔥 BEAT IT</button>
-      <button class="secondary tagBtn">👥 TAG FRIEND</button>
+
+      <button class="primary beatBtn">
+        🔥 BEAT IT
+      </button>
+
+      <button class="secondary tagBtn">
+        👥 TAG FRIEND
+      </button>
+
     </div>
+
+
     <div class="chainline"></div>
+
   </article>
+
 </template>
 
+
 <script src="app.js"></script>
-<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("./sw.js").catch(()=>{})}</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker
+    .register("./sw.js")
+    .catch(() => {});
+}
+</script>
+
 </body>
 </html>
