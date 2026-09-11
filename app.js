@@ -318,7 +318,7 @@ async function loadCommentsFromSupabase() {
           p?.name ||
           p?.username ||
           'BeatTag User',
-        text: item.text,
+        text: item.comment_text,
         time:
           new Date(item.created_at).getTime()
       });
@@ -2657,7 +2657,7 @@ async function addComment(id) {
       .insert({
         challenge_id: id,
         user_id: user.id,
-        text: txt
+        comment_text: txt
       });
 
     if (error) throw error;
