@@ -1,28 +1,28 @@
 function renderCapture(){
-  const a = $('#captureArea');
-  if(!a) return;
+  const a=$('#captureArea'); 
+  if(!a)return;
 
-  if(currentType === 'text'){
-    a.innerHTML = '';
+  if(currentType==='text'){
+    a.innerHTML='';
     stopStream();
     return;
   }
 
-  const accept =
-    currentType === 'photo'
+  const accept=
+    currentType==='photo'
       ? 'image/*'
-      : currentType === 'video'
+      : currentType==='video'
       ? 'video/*'
       : 'audio/*';
 
-  a.innerHTML = `
+  a.innerHTML=`
     <div class="capture-box">
 
       <strong>
         ${
-          currentType === 'photo'
+          currentType==='photo'
             ? '📷 Photo'
-            : currentType === 'video'
+            : currentType==='video'
             ? '🎥 Video'
             : '🎙 Audio'
         }
@@ -31,23 +31,19 @@ function renderCapture(){
       <div class="capture-actions">
 
         ${
-          currentType !== 'audio'
-            ? `
-              <button
-                type="button"
-                class="secondary"
-                onclick="openCamera('${currentType}')">
-                Open Camera
-              </button>
-            `
-            : `
-              <button
-                type="button"
-                class="secondary"
-                onclick="toggleAudioRecord()">
-                Start Recording
-              </button>
-            `
+          currentType!=='audio'
+            ? `<button
+                 type="button"
+                 class="secondary"
+                 onclick="openCamera('${currentType}')">
+                 Open Camera
+               </button>`
+            : `<button
+                 type="button"
+                 class="secondary"
+                 onclick="toggleAudioRecord()">
+                 Start Recording
+               </button>`
         }
 
         <button
@@ -58,8 +54,8 @@ function renderCapture(){
         </button>
 
         <input
-          type="file"
           id="filePick"
+          type="file"
           accept="${accept}"
           hidden
         >
@@ -74,18 +70,23 @@ function renderCapture(){
     </div>
   `;
 
-  const chooseFileBtn = $('#chooseFileBtn');
-  const filePick = $('#filePick');
+  const chooseFileBtn=$('#chooseFileBtn');
+  const filePick=$('#filePick');
 
-  chooseFileBtn.addEventListener('click', () => {
-    filePick.click();
-  });
+  if(chooseFileBtn && filePick){
 
-  filePick.addEventListener('change', (e) => {
-    const file = e.target.files?.[0];
+    chooseFileBtn.onclick=()=>{
+      filePick.click();
+    };
 
-    if(file){
-      fileChosen(file);
-    }
-  });
+    filePick.onchange=e=>{
+      const file=
+        e.target.files &&
+        e.target.files[0];
+
+      if(file){
+        fileChosen(file);
+      }
+    };
+  }
 }
