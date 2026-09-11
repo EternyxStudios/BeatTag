@@ -172,6 +172,51 @@ const DBKEY = 'beattag_v2_state';
 let state =
   JSON.parse(localStorage.getItem(DBKEY) || 'null') ||
   seedState();
+async function loadRealProfile() {
+  try {
+    const {
+      data: { user }
+    } = await supabaseClient.auth.getUser();
+
+    if (!user) return;
+
+    const { data: profile, error } = await supabaseClient
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    if (error) {
+      console.error("Profile load error:", error);
+      return;
+    }
+
+    const localProfile = state.profiles[state.currentProfile];
+
+    if (localProfile && profile) {
+      localProfile.name =
+        profile.name || user.user_metadata?.name || "BeatTag User";
+
+      localProfile.handle =
+        "@" + (
+          profile.username ||
+          user.user_metadata?.username ||
+          "user"
+        );
+
+      localProfile.coins = profile.coins ?? 100;
+      localProfile.streak = profile.streak ?? 0;
+      localProfile.bio = profile.bio || "";
+
+      save();
+
+      const coinEl = document.getElementById("coinCount");
+      if (coinEl) coinEl.textContent = localProfile.coins;
+    }
+  } catch (err) {
+    console.error("Profile error:", err);
+  }
+}
 
 let currentType = 'text';
 let captureBlob = null;
