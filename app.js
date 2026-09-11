@@ -148,6 +148,7 @@ async function initAuth() {
 
   if (session) {
     await loadRealProfile();
+    await loadChallengesFromSupabase();
     showApp();
   } else {
     showAuthScreen();
