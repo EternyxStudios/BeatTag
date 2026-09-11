@@ -6,6 +6,162 @@ const supabaseClient = supabase.createClient(
   SUPABASE_URL,
   SUPABASE_KEY
 );
+/* =========================
+   SUPABASE AUTH
+========================= */
+
+let authMode = "login";
+
+function showAuthScreen() {
+  document.getElementById("authScreen")?.classList.remove("hidden");
+  document.getElementById("app")?.classList.add("hidden");
+}
+
+function showApp() {
+  document.getElementById("authScreen")?.classList.add("hidden");
+  document.getElementById("app")?.classList.remove("hidden");
+}
+
+function toggleAuthMode() {
+  authMode = authMode === "login" ? "signup" : "login";
+
+  const isSignup = authMode === "signup";
+
+  document.getElementById("authTitle").textContent =
+    isSignup ? "Create Account" : "Login";
+
+  document.getElementById("authSubmitBtn").textContent =
+    isSignup ? "Sign Up" : "Login";
+
+  document.getElementById("authSwitchText").textContent =
+    isSignup
+      ? "Already have an account? Login"
+      : "Don't have an account? Sign Up";
+
+  document
+    .querySelectorAll(".auth-only-signup")
+    .forEach(el => el.classList.toggle("hidden", !isSignup));
+
+  document.getElementById("authMessage").textContent = "";
+}
+
+async function submitAuth() {
+  const name =
+    document.getElementById("authName")?.value.trim() || "";
+
+  const username =
+    document.getElementById("authUsername")?.value.trim() || "";
+
+  const email =
+    document.getElementById("authEmail")?.value.trim() || "";
+
+  const password =
+    document.getElementById("authPassword")?.value || "";
+
+  const message = document.getElementById("authMessage");
+  const button = document.getElementById("authSubmitBtn");
+
+  message.textContent = "";
+
+  if (!email || !password) {
+    message.textContent = "Email aur password required hai.";
+    return;
+  }
+
+  if (password.length < 6) {
+    message.textContent = "Password minimum 6 characters ka rakho.";
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Please wait...";
+
+  try {
+    if (authMode === "signup") {
+      if (!name || !username) {
+        message.textContent = "Name aur username bhi enter karo.";
+        return;
+      }
+
+      const cleanUsername = username
+        .replace(/^@/, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9_]/g, "");
+
+      if (cleanUsername.length < 3) {
+        message.textContent = "Username minimum 3 characters ka rakho.";
+        return;
+      }
+
+      const { data, error } = await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo:
+            "https://eternyxstudios.github.io/BeatTag/",
+          data: {
+            name,
+            username: cleanUsername
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      if (!data.session) {
+        message.textContent =
+          "Account created ✅ Email inbox/spam me verification link check karo.";
+      } else {
+        showApp();
+      }
+    } else {
+      const { data, error } =
+        await supabaseClient.auth.signInWithPassword({
+          email,
+          password
+        });
+
+      if (error) throw error;
+
+      if (data.session) {
+        showApp();
+      }
+    }
+  } catch (err) {
+    message.textContent = err.message || "Something went wrong.";
+  } finally {
+    button.disabled = false;
+    button.textContent =
+      authMode === "signup" ? "Sign Up" : "Login";
+  }
+}
+
+async function logoutBeatTag() {
+  await supabaseClient.auth.signOut();
+  showAuthScreen();
+}
+
+async function initAuth() {
+  const {
+    data: { session }
+  } = await supabaseClient.auth.getSession();
+
+  if (session) {
+    showApp();
+  } else {
+    showAuthScreen();
+  }
+}
+
+supabaseClient.auth.onAuthStateChange((_event, session) => {
+  if (session) {
+    showApp();
+  } else {
+    showAuthScreen();
+  }
+});
+
+window.addEventListener("DOMContentLoaded", initAuth);
 const $ = s => document.querySelector(s);
 const screenEl = $('#screen');
 const modal = $('#modal');
