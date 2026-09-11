@@ -218,7 +218,112 @@ async function loadRealProfile() {
     console.error("Profile error:", err);
   }
 }
+async function loadChallengesFromSupabase() {
+  try {
+    const { data: challenges, error } = await supabaseClient
+      .from("challenges")
+      .select("*")
+      .eq("status", "active")
+      .order("created_at", { ascending: false });
 
+    if (error) {
+      console.error("Challenge load error:", error);
+      return;
+    }
+
+    if (!challenges || !challenges.length) return;
+
+    const creatorIds = [
+      ...new Set(
+        challenges
+          .map(c => c.creator_id)
+          .filter(Boolean)
+      )
+    ];
+
+    let profileMap = {};
+
+    if (creatorIds.length) {
+      const { data: profiles, error: profileError } =
+        await supabaseClient
+          .from("profiles")
+          .select("id,name,username")
+          .in("id", creatorIds);
+
+      if (!profileError && profiles) {
+        profiles.forEach(p => {
+          profileMap[p.id] = p;
+        });
+      }
+    }
+
+    const cloudChallenges = challenges.map(c => {
+      const creatorProfile = profileMap[c.creator_id];
+
+      return {
+        id: c.id,
+        creator: c.creator_id,
+        creatorName:
+          creatorProfile?.name ||
+          creatorProfile?.username ||
+          "BeatTag User",
+
+        title: c.title,
+        type: c.challenge_type,
+        text: c.description || "",
+
+        createdAt:
+          new Date(c.created_at).getTime(),
+
+        parentId: c.parent_id,
+        generation: c.generation || 1,
+
+        likes: {},
+        dislikes: {},
+        comments: [],
+
+        attempts: c.attempts_count || 0,
+        tags: [],
+
+        media: c.media_url
+          ? {
+              kind:
+                c.challenge_type === "photo"
+                  ? "image"
+                  : c.challenge_type,
+              data: c.media_url
+            }
+          : null
+      };
+    });
+
+    const localOnly = state.challenges.filter(
+      localChallenge =>
+        !cloudChallenges.some(
+          cloudChallenge =>
+            cloudChallenge.id === localChallenge.id
+        )
+    );
+
+    state.challenges = [
+      ...cloudChallenges,
+      ...localOnly
+    ];
+
+    save();
+
+    console.log(
+      "Supabase challenges loaded:",
+      cloudChallenges.length
+    );
+
+  } catch (err) {
+    console.error(
+      "loadChallengesFromSupabase error:",
+      err
+    );
+  }
+}
 let currentType = 'text';
 let captureBlob = null;
 let captureUrl = '';
