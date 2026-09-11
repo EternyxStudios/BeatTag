@@ -13,7 +13,25 @@
 </head>
 
 <body>
+<div id="authScreen" class="auth-screen hidden">
+  <div class="auth-card">
+    <div class="auth-logo">BEAT<span>TAG</span></div>
+    <h2 id="authTitle">Login</h2>
 
+    <input id="authName" type="text" placeholder="Name" class="auth-only-signup hidden">
+    <input id="authUsername" type="text" placeholder="Username" class="auth-only-signup hidden">
+    <input id="authEmail" type="email" placeholder="Email">
+    <input id="authPassword" type="password" placeholder="Password">
+
+    <button id="authSubmitBtn" class="primary" onclick="submitAuth()">Login</button>
+
+    <p id="authMessage"></p>
+
+    <button class="auth-switch" onclick="toggleAuthMode()">
+      <span id="authSwitchText">Don't have an account? Sign Up</span>
+    </button>
+  </div>
+</div>
 <div id="app">
 
   <!-- TOP HEADER -->
