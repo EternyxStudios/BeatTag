@@ -1,148 +1,301 @@
 const $ = s => document.querySelector(s);
 const screenEl = $('#screen');
-const modal = $('#modal'), modalCard = $('#modalCard');
+const modal = $('#modal');
+const modalCard = $('#modalCard');
 
-const DBKEY='beattag_v2_state';
-let state = JSON.parse(localStorage.getItem(DBKEY) || 'null') || seedState();
-let currentType='text';
-let captureBlob=null, captureUrl='', recorder=null, chunks=[], stream=null;
+const DBKEY = 'beattag_v2_state';
 
-function seedState(){
+let state =
+  JSON.parse(localStorage.getItem(DBKEY) || 'null') ||
+  seedState();
+
+let currentType = 'text';
+let captureBlob = null;
+let captureUrl = '';
+let recorder = null;
+let chunks = [];
+let stream = null;
+
+
+/* =========================
+   START DATA
+========================= */
+
+function seedState() {
   return {
-    currentProfile:'p1',
-    profiles:{
-      p1:{
-        id:'p1',
-        name:'Mithilesh',
-        handle:'@mithilesh',
-        coins:280,
-        streak:3,
-        unlocks:[],
-        createdAt:Date.now()
+    currentProfile: 'p1',
+
+    profiles: {
+      p1: {
+        id: 'p1',
+        name: 'Mithilesh',
+        handle: '@mithilesh',
+        coins: 280,
+        streak: 3,
+        unlocks: [],
+        createdAt: Date.now()
       }
     },
 
-    challenges:[
+    challenges: [
       {
-        id:'c1',
-        creator:'p1',
-        creatorName:'Mithilesh',
-        title:'Can you take a better sunset photo?',
-        type:'text',
-        text:'Post a better sunset photo than mine 🌇',
-        createdAt:Date.now()-7200000,
-        parentId:null,
-        generation:1,
-        likes:{},
-        dislikes:{},
-        comments:[],
-        attempts:0,
-        tags:['Shivam'],
-        media:null
+        id: 'c1',
+        creator: 'p1',
+        creatorName: 'Mithilesh',
+        title: 'Can you take a better sunset photo?',
+        type: 'text',
+        text: 'Post a better sunset photo than mine 🌇',
+        createdAt: Date.now() - 7200000,
+        parentId: null,
+        generation: 1,
+        likes: {
+          demo1: true,
+          demo2: true,
+          demo3: true
+        },
+        dislikes: {},
+        comments: [
+          {
+            profile: 'demo1',
+            name: 'Rahul',
+            text: 'Challenge accepted 🔥',
+            time: Date.now() - 100000
+          }
+        ],
+        attempts: 4,
+        tags: ['Shivam'],
+        media: null
       },
 
       {
-        id:'c2',
-        creator:'guest1',
-        creatorName:'Aman',
-        title:'Beat my 30 push-ups!',
-        type:'text',
-        text:'30 push-ups in one go. Can you beat it? 💪',
-        createdAt:Date.now()-14400000,
-        parentId:null,
-        generation:1,
-        likes:{},
-        dislikes:{},
-        comments:[],
-        attempts:2,
-        tags:[],
-        media:null
+        id: 'c2',
+        creator: 'guest1',
+        creatorName: 'Aman',
+        title: 'Beat my 30 push-ups!',
+        type: 'text',
+        text: '30 push-ups in one go. Can you beat it? 💪',
+        createdAt: Date.now() - 14400000,
+        parentId: null,
+        generation: 1,
+        likes: {
+          demo1: true,
+          demo2: true
+        },
+        dislikes: {},
+        comments: [],
+        attempts: 2,
+        tags: [],
+        media: null
       }
     ],
 
-    notifications:[
+    notifications: [
       {
-        text:'Welcome to BeatTag 🔥',
-        time:Date.now(),
-        read:false
+        text: 'Welcome to BeatTag 🔥',
+        time: Date.now(),
+        read: false
       }
     ],
 
-    purchases:[]
+    purchases: []
+  };
+}
+
+
+/* =========================
+   BASIC HELPERS
+========================= */
+
+function save() {
+  try {
+    localStorage.setItem(
+      DBKEY,
+      JSON.stringify(state)
+    );
+  } catch (e) {
+    console.warn('Storage full:', e);
+
+    toast(
+      'Storage full. Large photo/video browser me save nahi ho paaya.'
+    );
   }
-}
 
-function save(){
-  localStorage.setItem(DBKEY,JSON.stringify(state));
   updateCoins();
+  updateNotificationDot();
 }
 
-function profile(){
+function profile() {
   return state.profiles[state.currentProfile];
 }
 
-function updateCoins(){
-  const e=$('#coinCount');
-  if(e)e.textContent=profile().coins;
+function updateCoins() {
+  const e = $('#coinCount');
+
+  if (e) {
+    e.textContent = profile().coins;
+  }
 }
 
-function fmt(t){
-  const m=Math.floor((Date.now()-t)/60000);
+function updateNotificationDot() {
+  const dot = $('#notifDot');
 
-  if(m<1)return 'now';
-  if(m<60)return m+'m ago';
+  if (!dot) return;
 
-  const h=Math.floor(m/60);
+  const unread =
+    state.notifications.some(
+      n => !n.read
+    );
 
-  if(h<24)return h+'h ago';
-
-  return Math.floor(h/24)+'d ago';
+  dot.classList.toggle(
+    'hidden',
+    !unread
+  );
 }
 
-function toast(msg){
-  const d=document.createElement('div');
+function fmt(t) {
+  const m =
+    Math.floor(
+      (Date.now() - t) / 60000
+    );
 
-  d.className='toast';
-  d.textContent=msg;
+  if (m < 1) return 'now';
+  if (m < 60) return m + 'm ago';
+
+  const h =
+    Math.floor(m / 60);
+
+  if (h < 24) return h + 'h ago';
+
+  return (
+    Math.floor(h / 24) +
+    'd ago'
+  );
+}
+
+function toast(msg) {
+  const old =
+    document.querySelector('.toast');
+
+  if (old) old.remove();
+
+  const d =
+    document.createElement('div');
+
+  d.className = 'toast';
+  d.textContent = msg;
 
   document.body.appendChild(d);
 
-  setTimeout(()=>{
+  setTimeout(() => {
     d.remove();
-  },1800);
+  }, 1800);
 }
 
-function go(tab){
+
+/* =========================
+   NAVIGATION
+========================= */
+
+function go(tab) {
+
+  stopStream();
 
   document
-    .querySelectorAll('.bottom-nav button')
-    .forEach(b=>{
+    .querySelectorAll(
+      '.bottom-nav button'
+    )
+    .forEach(b => {
+
       b.classList.toggle(
         'active',
-        b.dataset.tab===tab
+        b.dataset.tab === tab
       );
+
     });
 
-  if(tab==='home')renderHome();
-  if(tab==='explore')renderExplore();
-  if(tab==='create')renderCreate();
-  if(tab==='chains')renderChains();
-  if(tab==='profile')renderProfile();
-  if(tab==='shop')renderShop();
+  if (tab === 'home') {
+    renderHome();
+  }
+
+  if (tab === 'explore') {
+    renderExplore();
+  }
+
+  if (tab === 'featured') {
+    renderFeatured();
+  }
+
+  if (tab === 'create') {
+    renderCreate();
+  }
+
+  if (tab === 'chains') {
+    renderChains();
+  }
+
+  if (tab === 'shop') {
+    renderShop();
+  }
+
+  if (tab === 'profile') {
+    renderProfile();
+  }
 
   window.scrollTo({
-    top:0,
-    behavior:'smooth'
+    top: 0,
+    behavior: 'smooth'
   });
 }
+
+
+/* =========================
+   FEATURED SCORE
+========================= */
+
+function featuredScore(c) {
+
+  const likes =
+    Object.keys(
+      c.likes || {}
+    ).length;
+
+  const comments =
+    (c.comments || []).length;
+
+  const attempts =
+    c.attempts || 0;
+
+  return (
+    likes * 3 +
+    comments * 2 +
+    attempts * 4 +
+    c.generation
+  );
+}
+
+function getFeaturedChallenges(
+  limit = 5
+) {
+
+  return state.challenges
+    .slice()
+    .sort(
+      (a, b) =>
+        featuredScore(b) -
+        featuredScore(a)
+    )
+    .slice(0, limit);
+}
+
 
 /* =========================
    HOME
 ========================= */
 
-function renderHome(){
+function renderHome() {
 
-  screenEl.innerHTML=`
+  screenEl.innerHTML = `
+
     <section class="hero">
 
       <h1>
@@ -152,7 +305,7 @@ function renderHome(){
 
       <p>
         Create any challenge,
-        beat your friends,
+        beat your friends
         and grow the chain.
       </p>
 
@@ -166,33 +319,67 @@ function renderHome(){
 
         <button
           class="secondary"
-          onclick="go('shop')">
-          🛍 Coin Shop
+          onclick="go('featured')">
+          ⭐ Featured
         </button>
 
       </div>
 
     </section>
 
+
+    <section class="featured-section">
+
+      <div class="featured-header">
+
+        <h2>
+          ⭐ Featured Challenges
+        </h2>
+
+        <button
+          class="ghost"
+          onclick="go('featured')">
+          View All
+        </button>
+
+      </div>
+
+      <div
+        class="featured-list"
+        id="homeFeatured">
+      </div>
+
+    </section>
+
+
     <div class="pills">
 
-      <button class="pill active">
+      <button
+        class="pill active"
+        onclick="renderFeed('all',this)">
         For You
       </button>
 
-      <button class="pill">
+      <button
+        class="pill"
+        onclick="renderFeed('trending',this)">
         🔥 Trending
       </button>
 
-      <button class="pill">
+      <button
+        class="pill"
+        onclick="renderFeed('friends',this)">
         Friends
       </button>
 
-      <button class="pill">
+      <button
+        class="pill"
+        onclick="renderFeed('new',this)">
         New
       </button>
 
     </div>
+
 
     <div class="section-title">
 
@@ -209,25 +396,206 @@ function renderHome(){
     <div id="feed"></div>
   `;
 
-  const feed=$('#feed');
+  renderFeaturedStrip();
 
-  state.challenges
-    .slice()
-    .sort((a,b)=>b.createdAt-a.createdAt)
-    .forEach(c=>{
-      feed.appendChild(
-        challengeCard(c)
-      );
-    });
+  renderFeed('all');
 }
+
+
+/* =========================
+   HOME FEATURED STRIP
+========================= */
+
+function renderFeaturedStrip() {
+
+  const box =
+    $('#homeFeatured');
+
+  if (!box) return;
+
+  const featured =
+    getFeaturedChallenges(4);
+
+  box.innerHTML = '';
+
+  if (!featured.length) {
+
+    box.innerHTML = `
+      <div class="empty">
+        Featured challenge abhi nahi hai.
+      </div>
+    `;
+
+    return;
+  }
+
+  featured.forEach(
+    (c, index) => {
+
+      const likes =
+        Object.keys(
+          c.likes || {}
+        ).length;
+
+      const comments =
+        (c.comments || []).length;
+
+      const el =
+        document.createElement('div');
+
+      el.className =
+        'featured-card';
+
+      el.innerHTML = `
+
+        <div class="featured-rank">
+          #${index + 1}
+        </div>
+
+        <div class="featured-badge">
+          ⭐ FEATURED
+        </div>
+
+        <h3>
+          ${escapeHTML(c.title)}
+        </h3>
+
+        <p>
+          by ${escapeHTML(c.creatorName)}
+        </p>
+
+        <div class="featured-stats">
+
+          <span>
+            ❤️ ${likes}
+          </span>
+
+          <span>
+            💬 ${comments}
+          </span>
+
+          <span>
+            🔥 ${c.attempts || 0}
+          </span>
+
+          <span>
+            ⛓ Gen ${c.generation}
+          </span>
+
+        </div>
+
+        <button
+          class="primary"
+          style="width:100%;margin-top:14px"
+          onclick="openBeat('${c.id}')">
+
+          🔥 Beat This
+
+        </button>
+      `;
+
+      box.appendChild(el);
+    }
+  );
+}
+
+
+/* =========================
+   HOME FILTERS
+========================= */
+
+function renderFeed(
+  mode = 'all',
+  button = null
+) {
+
+  const feed = $('#feed');
+
+  if (!feed) return;
+
+  if (button) {
+
+    document
+      .querySelectorAll('.pills .pill')
+      .forEach(b =>
+        b.classList.remove('active')
+      );
+
+    button.classList.add(
+      'active'
+    );
+  }
+
+  let arr =
+    state.challenges.slice();
+
+  if (mode === 'trending') {
+
+    arr.sort(
+      (a, b) =>
+        featuredScore(b) -
+        featuredScore(a)
+    );
+
+  } else if (mode === 'new') {
+
+    arr.sort(
+      (a, b) =>
+        b.createdAt -
+        a.createdAt
+    );
+
+  } else if (mode === 'friends') {
+
+    arr =
+      arr.filter(
+        c =>
+          c.creator !==
+          state.currentProfile
+      );
+
+  } else {
+
+    arr.sort(
+      (a, b) =>
+        b.createdAt -
+        a.createdAt
+    );
+  }
+
+  feed.innerHTML = '';
+
+  if (!arr.length) {
+
+    feed.innerHTML = `
+      <div class="empty">
+        No challenges found.
+      </div>
+    `;
+
+    return;
+  }
+
+  arr.forEach(c => {
+
+    feed.appendChild(
+      challengeCard(c)
+    );
+
+  });
+}
+
 
 /* =========================
    MEDIA
 ========================= */
 
-function mediaHTML(c){
+function mediaHTML(c) {
 
-  if(c.media?.kind==='image'){
+  if (
+    c.media?.kind === 'image'
+  ) {
+
     return `
       <img
         src="${c.media.data}"
@@ -235,7 +603,10 @@ function mediaHTML(c){
     `;
   }
 
-  if(c.media?.kind==='video'){
+  if (
+    c.media?.kind === 'video'
+  ) {
+
     return `
       <video
         src="${c.media.data}"
@@ -245,7 +616,10 @@ function mediaHTML(c){
     `;
   }
 
-  if(c.media?.kind==='audio'){
+  if (
+    c.media?.kind === 'audio'
+  ) {
+
     return `
       <audio
         src="${c.media.data}"
@@ -256,55 +630,98 @@ function mediaHTML(c){
 
   return `
     <div class="text-media">
-      ${escapeHTML(c.text||c.title)}
+      ${escapeHTML(
+        c.text || c.title
+      )}
     </div>
   `;
 }
+
 
 /* =========================
    CHALLENGE CARD
 ========================= */
 
-function challengeCard(c){
+function challengeCard(c) {
 
-  const n=$('#challengeCardTpl')
-    .content
-    .cloneNode(true);
+  const n =
+    $('#challengeCardTpl')
+      .content
+      .cloneNode(true);
 
-  n.querySelector('.creatorName')
-    .textContent=c.creatorName;
+  const article =
+    n.querySelector(
+      '.challenge-card'
+    );
 
-  n.querySelector('.avatar')
-    .textContent=
-      (c.creatorName||'?')[0]
+  const topFeatured =
+    getFeaturedChallenges(3)
+      .some(
+        x => x.id === c.id
+      );
+
+  if (topFeatured) {
+    article.classList.add(
+      'featured'
+    );
+  }
+
+  n.querySelector(
+    '.creatorName'
+  ).textContent =
+    c.creatorName;
+
+  n.querySelector(
+    '.avatar'
+  ).textContent =
+    (c.creatorName || '?')
+      [0]
       .toUpperCase();
 
-  n.querySelector('.meta')
-    .textContent=
-      `${fmt(c.createdAt)} • Generation ${c.generation}`;
+  n.querySelector(
+    '.meta'
+  ).textContent =
+    `${fmt(c.createdAt)} • Generation ${c.generation}`;
 
-  n.querySelector('.challenge-title')
-    .textContent=c.title;
+  n.querySelector(
+    '.challenge-title'
+  ).textContent =
+    c.title;
 
-  n.querySelector('.media-wrap')
-    .innerHTML=mediaHTML(c);
+  n.querySelector(
+    '.media-wrap'
+  ).innerHTML =
+    mediaHTML(c);
 
-  const like=n.querySelector('.likeBtn');
-  const dis=n.querySelector('.dislikeBtn');
+  const like =
+    n.querySelector('.likeBtn');
 
-  const pid=state.currentProfile;
+  const dis =
+    n.querySelector(
+      '.dislikeBtn'
+    );
 
-  like.querySelector('span')
-    .textContent=
-      Object.keys(c.likes||{}).length;
+  const pid =
+    state.currentProfile;
 
-  dis.querySelector('span')
-    .textContent=
-      Object.keys(c.dislikes||{}).length;
+  like.querySelector(
+    'span'
+  ).textContent =
+    Object.keys(
+      c.likes || {}
+    ).length;
 
-  n.querySelector('.commentBtn span')
-    .textContent=
-      (c.comments||[]).length;
+  dis.querySelector(
+    'span'
+  ).textContent =
+    Object.keys(
+      c.dislikes || {}
+    ).length;
+
+  n.querySelector(
+    '.commentBtn span'
+  ).textContent =
+    (c.comments || []).length;
 
   like.classList.toggle(
     'active',
@@ -316,106 +733,210 @@ function challengeCard(c){
     !!c.dislikes?.[pid]
   );
 
-  like.onclick=()=>{
-    react(c.id,'like');
-  };
+  like.onclick =
+    () =>
+      react(
+        c.id,
+        'like'
+      );
 
-  dis.onclick=()=>{
-    react(c.id,'dislike');
-  };
+  dis.onclick =
+    () =>
+      react(
+        c.id,
+        'dislike'
+      );
 
-  n.querySelector('.commentBtn')
-    .onclick=()=>{
+  n.querySelector(
+    '.commentBtn'
+  ).onclick =
+    () =>
       openComments(c.id);
-    };
 
-  n.querySelector('.beatBtn')
-    .onclick=()=>{
+  n.querySelector(
+    '.beatBtn'
+  ).onclick =
+    () =>
       openBeat(c.id);
-    };
 
-  n.querySelector('.tagBtn')
-    .onclick=()=>{
+  n.querySelector(
+    '.tagBtn'
+  ).onclick =
+    () =>
       tagFriend(c.id);
-    };
 
-  n.querySelector('.shareBtn')
-    .onclick=()=>{
+  n.querySelector(
+    '.shareBtn'
+  ).onclick =
+    () =>
       shareChallenge(c.id);
-    };
 
-  n.querySelector('.chainline')
-    .textContent=
-      `⛓ ${c.attempts||0} attempts • ${c.generation} generation${c.generation>1?'s':''}`;
+  n.querySelector(
+    '.chainline'
+  ).textContent =
+    `⛓ ${c.attempts || 0} attempts • Generation ${c.generation}`;
 
   return n;
 }
+
 
 /* =========================
    LIKE / DISLIKE
 ========================= */
 
-function react(id,type){
+function react(id, type) {
 
-  const c=
+  const c =
     state.challenges.find(
-      x=>x.id===id
+      x => x.id === id
     );
 
-  const pid=
+  if (!c) return;
+
+  const pid =
     state.currentProfile;
 
   c.likes ||= {};
   c.dislikes ||= {};
 
-  if(type==='like'){
+  if (type === 'like') {
 
-    if(c.likes[pid]){
+    if (c.likes[pid]) {
 
       delete c.likes[pid];
 
-    }else{
+    } else {
 
-      c.likes[pid]=true;
+      c.likes[pid] = true;
 
       delete c.dislikes[pid];
     }
 
-  }else{
+  } else {
 
-    if(c.dislikes[pid]){
+    if (c.dislikes[pid]) {
 
       delete c.dislikes[pid];
 
-    }else{
+    } else {
 
-      c.dislikes[pid]=true;
+      c.dislikes[pid] = true;
 
       delete c.likes[pid];
     }
   }
 
   save();
-  renderHome();
+
+  go('home');
 }
+
+
+/* =========================
+   FEATURED PAGE
+========================= */
+
+function renderFeatured() {
+
+  const arr =
+    getFeaturedChallenges(
+      state.challenges.length
+    );
+
+  screenEl.innerHTML = `
+
+    <div class="section-title">
+
+      <h2>
+        ⭐ Featured
+      </h2>
+
+      <span class="muted">
+        Top challenges
+      </span>
+
+    </div>
+
+    <section class="panel">
+
+      <strong>
+        How Featured works
+      </strong>
+
+      <p class="muted">
+        Likes, comments, attempts
+        aur challenge generations
+        ke basis par top challenges
+        yahan rank hote hain.
+      </p>
+
+    </section>
+
+    <div id="featuredFeed"></div>
+  `;
+
+  const feed =
+    $('#featuredFeed');
+
+  if (!arr.length) {
+
+    feed.innerHTML = `
+      <div class="empty">
+        No featured challenges yet.
+      </div>
+    `;
+
+    return;
+  }
+
+  arr.forEach(
+    (c, index) => {
+
+      const rank =
+        document.createElement(
+          'div'
+        );
+
+      rank.innerHTML = `
+        <div
+          class="featured-badge"
+          style="margin-bottom:8px">
+          ⭐ #${index + 1} Featured
+          • Score ${featuredScore(c)}
+        </div>
+      `;
+
+      feed.appendChild(rank);
+
+      feed.appendChild(
+        challengeCard(c)
+      );
+    }
+  );
+}
+
 
 /* =========================
    EXPLORE
 ========================= */
 
-function renderExplore(){
+function renderExplore() {
 
-  screenEl.innerHTML=`
+  screenEl.innerHTML = `
 
     <div class="section-title">
-      <h2>Explore</h2>
+
+      <h2>
+        Explore
+      </h2>
+
     </div>
 
     <div class="searchbar">
 
       <input
         id="search"
-        placeholder="Search challenges, users, categories...">
+        placeholder="Search challenges, users...">
 
       <button
         class="primary"
@@ -427,24 +948,34 @@ function renderExplore(){
 
     <div class="pills">
 
-      <button class="pill active">
+      <button
+        class="pill active"
+        data-filter="all">
         All
       </button>
 
-      <button class="pill">
-        Photography
+      <button
+        class="pill"
+        data-filter="photo">
+        📷 Photo
       </button>
 
-      <button class="pill">
-        Music
+      <button
+        class="pill"
+        data-filter="video">
+        🎥 Video
       </button>
 
-      <button class="pill">
-        Gaming
+      <button
+        class="pill"
+        data-filter="audio">
+        🎙 Audio
       </button>
 
-      <button class="pill">
-        Fitness
+      <button
+        class="pill"
+        data-filter="text">
+        ✍ Text
       </button>
 
     </div>
@@ -458,63 +989,119 @@ function renderExplore(){
       doSearch
     );
 
-  doSearch();
+  document
+    .querySelectorAll(
+      '[data-filter]'
+    )
+    .forEach(b => {
+
+      b.onclick = () => {
+
+        document
+          .querySelectorAll(
+            '[data-filter]'
+          )
+          .forEach(x =>
+            x.classList.remove(
+              'active'
+            )
+          );
+
+        b.classList.add(
+          'active'
+        );
+
+        doSearch(
+          b.dataset.filter
+        );
+      };
+
+    });
+
+  doSearch('all');
 }
 
-function doSearch(){
+function doSearch(
+  typeFilter = null
+) {
 
-  const q=
-    ($('#search')?.value||'')
-    .trim()
-    .toLowerCase();
+  const q =
+    ($('#search')?.value || '')
+      .trim()
+      .toLowerCase();
 
-  const out=$('#results');
-
-  if(!out)return;
-
-  out.innerHTML='';
-
-  const arr=
-    state.challenges.filter(c=>
-
-      !q ||
-
-      `${c.title} ${c.text} ${c.creatorName}`
-        .toLowerCase()
-        .includes(q)
-
+  const active =
+    document.querySelector(
+      '[data-filter].active'
     );
 
-  if(!arr.length){
+  const filter =
+    typeFilter ||
+    active?.dataset.filter ||
+    'all';
 
-    out.innerHTML=`
+  const out =
+    $('#results');
+
+  if (!out) return;
+
+  let arr =
+    state.challenges.filter(
+      c => {
+
+        const textMatch =
+          !q ||
+          `${c.title} ${c.text || ''} ${c.creatorName}`
+            .toLowerCase()
+            .includes(q);
+
+        const typeMatch =
+          filter === 'all' ||
+          c.type === filter;
+
+        return (
+          textMatch &&
+          typeMatch
+        );
+      }
+    );
+
+  out.innerHTML = '';
+
+  if (!arr.length) {
+
+    out.innerHTML = `
       <div class="empty">
         No challenge found.
       </div>
     `;
 
-  }else{
+    return;
+  }
 
-    arr.forEach(c=>{
+  arr.forEach(
+    c =>
       out.appendChild(
         challengeCard(c)
-      );
-    });
-  }
+      )
+  );
 }
+
 
 /* =========================
    CREATE
 ========================= */
 
-function renderCreate(parentId=null){
+function renderCreate(
+  parentId = null
+) {
 
-  currentType='text';
+  currentType = 'text';
 
-  captureBlob=null;
-  captureUrl='';
+  captureBlob = null;
+  captureUrl = '';
 
-  screenEl.innerHTML=`
+  screenEl.innerHTML = `
 
     <div class="section-title">
 
@@ -576,8 +1163,7 @@ function renderCreate(parentId=null){
 
         <textarea
           id="textInput"
-          placeholder="Explain the challenge...">
-        </textarea>
+          placeholder="Explain the challenge..."></textarea>
 
       </div>
 
@@ -586,7 +1172,7 @@ function renderCreate(parentId=null){
       <div class="field">
 
         <label>
-          Tag friends (optional)
+          Tag friends
         </label>
 
         <input
@@ -612,97 +1198,110 @@ function renderCreate(parentId=null){
   `;
 
   document
-    .querySelectorAll('.type-tabs button')
-    .forEach(b=>{
+    .querySelectorAll(
+      '.type-tabs button'
+    )
+    .forEach(b => {
 
-      b.onclick=()=>{
+      b.onclick = () => {
 
         document
-          .querySelectorAll('.type-tabs button')
-          .forEach(x=>{
-            x.classList.remove('active');
-          });
+          .querySelectorAll(
+            '.type-tabs button'
+          )
+          .forEach(
+            x =>
+              x.classList.remove(
+                'active'
+              )
+          );
 
-        b.classList.add('active');
+        b.classList.add(
+          'active'
+        );
 
-        currentType=b.dataset.type;
+        currentType =
+          b.dataset.type;
 
         renderCapture();
       };
+
     });
 
-  $('#postBtn').onclick=()=>{
-    publishChallenge(parentId);
-  };
+  $('#postBtn').onclick =
+    () =>
+      publishChallenge(
+        parentId
+      );
 
   renderCapture();
 }
 
+
 /* =========================
-   PHOTO / VIDEO / AUDIO
-   CHOOSE FILE FIXED
+   CAMERA / CHOOSE FILE
 ========================= */
 
-function renderCapture(){
+function renderCapture() {
 
-  const a=$('#captureArea');
+  const a =
+    $('#captureArea');
 
-  if(!a)return;
+  if (!a) return;
 
-  if(currentType==='text'){
+  if (
+    currentType === 'text'
+  ) {
 
-    a.innerHTML='';
+    a.innerHTML = '';
 
     stopStream();
 
     return;
   }
 
-  const accept=
-    currentType==='photo'
+  const accept =
+    currentType === 'photo'
       ? 'image/*'
-      : currentType==='video'
+      : currentType === 'video'
       ? 'video/*'
       : 'audio/*';
 
-  a.innerHTML=`
+  a.innerHTML = `
 
     <div class="capture-box">
 
       <strong>
-
         ${
-          currentType==='photo'
+          currentType === 'photo'
             ? '📷 Photo'
-            : currentType==='video'
+            : currentType === 'video'
             ? '🎥 Video'
             : '🎙 Audio'
         }
-
       </strong>
 
       <div class="capture-actions">
 
         ${
-          currentType!=='audio'
-
-          ? `
-            <button
-              type="button"
-              class="secondary"
-              onclick="openCamera('${currentType}')">
-              Open Camera
-            </button>
-          `
-
-          : `
-            <button
-              type="button"
-              class="secondary"
-              onclick="toggleAudioRecord()">
-              Start Recording
-            </button>
-          `
+          currentType !== 'audio'
+            ? `
+              <button
+                type="button"
+                class="secondary"
+                onclick="openCamera('${currentType}')">
+                Open Camera
+              </button>
+            `
+            : `
+              <button
+                type="button"
+                class="secondary"
+                id="audioRecordBtn"
+                onclick="toggleAudioRecord()">
+                Start Recording
+              </button>
+            `
         }
 
         <button
@@ -728,58 +1327,77 @@ function renderCapture(){
     </div>
   `;
 
-  const chooseFileBtn=
+  const chooseFileBtn =
     $('#chooseFileBtn');
 
-  const filePick=
+  const filePick =
     $('#filePick');
 
-  if(
+  if (
     chooseFileBtn &&
     filePick
-  ){
+  ) {
 
-    chooseFileBtn.onclick=()=>{
+    chooseFileBtn.onclick =
+      () => {
+        filePick.click();
+      };
 
-      filePick.click();
+    filePick.onchange =
+      e => {
 
-    };
+        const file =
+          e.target.files &&
+          e.target.files[0];
 
-    filePick.onchange=e=>{
+        if (file) {
 
-      const file=
-        e.target.files &&
-        e.target.files[0];
+          fileChosen(file);
 
-      if(file){
-
-        fileChosen(file);
-
-      }
-    };
+        }
+      };
   }
 }
+
 
 /* =========================
    CAMERA
 ========================= */
 
-async function openCamera(kind){
+async function openCamera(kind) {
 
   stopStream();
 
-  try{
+  try {
 
-    stream=
-      await navigator.mediaDevices
+    if (
+      !navigator.mediaDevices ||
+      !navigator.mediaDevices.getUserMedia
+    ) {
+
+      toast(
+        'Camera browser me available nahi hai.'
+      );
+
+      return;
+    }
+
+    stream =
+      await navigator
+        .mediaDevices
         .getUserMedia({
-          video:true,
-          audio:kind==='video'
+          video: {
+            facingMode:
+              'environment'
+          },
+          audio:
+            kind === 'video'
         });
 
-    const p=$('#preview');
+    const p =
+      $('#preview');
 
-    p.innerHTML=`
+    p.innerHTML = `
 
       <video
         id="liveCam"
@@ -795,9 +1413,9 @@ async function openCamera(kind){
           id="snapBtn">
 
           ${
-            kind==='photo'
-              ? 'Take Photo'
-              : 'Start Video'
+            kind === 'photo'
+              ? '📸 Take Photo'
+              : '🔴 Start Video'
           }
 
         </button>
@@ -805,42 +1423,49 @@ async function openCamera(kind){
       </div>
     `;
 
-    $('#liveCam').srcObject=
+    $('#liveCam').srcObject =
       stream;
 
-    if(kind==='photo'){
+    if (
+      kind === 'photo'
+    ) {
 
-      $('#snapBtn').onclick=
+      $('#snapBtn').onclick =
         takePhoto;
 
-    }else{
+    } else {
 
-      $('#snapBtn').onclick=
+      $('#snapBtn').onclick =
         startVideoRecord;
     }
 
-  }catch(e){
+  } catch (e) {
+
+    console.error(e);
 
     toast(
-      'Camera permission denied or unavailable. You can choose a file instead.'
+      'Camera permission allow karo ya Choose File use karo.'
     );
   }
 }
 
-function takePhoto(){
+function takePhoto() {
 
-  const v=$('#liveCam');
+  const v =
+    $('#liveCam');
 
-  const c=
+  if (!v) return;
+
+  const c =
     document.createElement(
       'canvas'
     );
 
-  c.width=
-    v.videoWidth||720;
+  c.width =
+    v.videoWidth || 720;
 
-  c.height=
-    v.videoHeight||1280;
+  c.height =
+    v.videoHeight || 1280;
 
   c.getContext('2d')
     .drawImage(
@@ -852,302 +1477,376 @@ function takePhoto(){
     );
 
   c.toBlob(
-    async b=>{
+    async b => {
 
-      captureBlob=b;
+      captureBlob = b;
 
-      captureUrl=
+      captureUrl =
         await blobToDataURL(b);
 
       stopStream();
 
-      showCaptured('image');
+      showCaptured(
+        'image'
+      );
 
     },
     'image/jpeg',
-    .86
+    0.82
   );
 }
 
-/* =========================
-   VIDEO RECORD
-========================= */
-
-function startVideoRecord(){
-
-  chunks=[];
-
-  recorder=
-    new MediaRecorder(stream);
-
-  recorder.ondataavailable=e=>{
-
-    if(e.data.size){
-
-      chunks.push(e.data);
-
-    }
-  };
-
-  recorder.onstop=async()=>{
-
-    captureBlob=
-      new Blob(
-        chunks,
-        {
-          type:
-            recorder.mimeType ||
-            'video/webm'
-        }
-      );
-
-    captureUrl=
-      await blobToDataURL(
-        captureBlob
-      );
-
-    stopStream();
-
-    showCaptured('video');
-  };
-
-  recorder.start();
-
-  const btn=$('#snapBtn');
-
-  btn.textContent=
-    'Stop Video';
-
-  btn.onclick=()=>{
-
-    recorder.stop();
-
-  };
-}
 
 /* =========================
-   AUDIO RECORD
+   VIDEO
 ========================= */
 
-async function toggleAudioRecord(){
+function startVideoRecord() {
 
-  if(
-    recorder &&
-    recorder.state==='recording'
-  ){
+  if (!stream) {
 
-    recorder.stop();
+    toast(
+      'Camera start nahi hua.'
+    );
 
     return;
   }
 
-  try{
+  if (
+    typeof MediaRecorder ===
+    'undefined'
+  ) {
 
-    stream=
-      await navigator.mediaDevices
-        .getUserMedia({
-          audio:true
-        });
+    toast(
+      'Video recording browser support nahi karta. Choose File use karo.'
+    );
 
-    chunks=[];
+    return;
+  }
 
-    recorder=
-      new MediaRecorder(stream);
+  chunks = [];
 
-    recorder.ondataavailable=e=>{
+  recorder =
+    new MediaRecorder(stream);
 
-      if(e.data.size){
+  recorder.ondataavailable =
+    e => {
+
+      if (e.data.size) {
 
         chunks.push(e.data);
 
       }
     };
 
-    recorder.onstop=async()=>{
+  recorder.onstop =
+    async () => {
 
-      captureBlob=
+      captureBlob =
         new Blob(
           chunks,
           {
             type:
               recorder.mimeType ||
-              'audio/webm'
+              'video/webm'
           }
         );
 
-      captureUrl=
+      captureUrl =
         await blobToDataURL(
           captureBlob
         );
 
       stopStream();
 
-      showCaptured('audio');
+      showCaptured(
+        'video'
+      );
     };
+
+  recorder.start();
+
+  const btn =
+    $('#snapBtn');
+
+  btn.textContent =
+    '⏹ Stop Video';
+
+  btn.onclick =
+    () => {
+
+      if (
+        recorder &&
+        recorder.state ===
+          'recording'
+      ) {
+
+        recorder.stop();
+
+      }
+    };
+}
+
+
+/* =========================
+   AUDIO
+========================= */
+
+async function toggleAudioRecord() {
+
+  if (
+    recorder &&
+    recorder.state ===
+      'recording'
+  ) {
+
+    recorder.stop();
+
+    return;
+  }
+
+  try {
+
+    stream =
+      await navigator
+        .mediaDevices
+        .getUserMedia({
+          audio: true
+        });
+
+    chunks = [];
+
+    recorder =
+      new MediaRecorder(stream);
+
+    recorder.ondataavailable =
+      e => {
+
+        if (e.data.size) {
+
+          chunks.push(e.data);
+
+        }
+      };
+
+    recorder.onstop =
+      async () => {
+
+        captureBlob =
+          new Blob(
+            chunks,
+            {
+              type:
+                recorder.mimeType ||
+                'audio/webm'
+            }
+          );
+
+        captureUrl =
+          await blobToDataURL(
+            captureBlob
+          );
+
+        stopStream();
+
+        showCaptured(
+          'audio'
+        );
+      };
 
     recorder.start();
 
-    const btn=
-      document.querySelector(
-        '.capture-actions .secondary'
-      );
+    const btn =
+      $('#audioRecordBtn');
 
-    if(btn){
+    if (btn) {
 
-      btn.textContent=
-        'Stop Recording';
+      btn.textContent =
+        '⏹ Stop Recording';
 
     }
 
     toast(
-      'Recording started'
+      'Recording started 🎙'
     );
 
-  }catch(e){
+  } catch (e) {
 
     toast(
-      'Microphone permission denied or unavailable.'
+      'Microphone permission allow karo.'
     );
   }
 }
 
+
 /* =========================
-   FILE PICKER
+   CHOOSE FILE
 ========================= */
 
-function fileChosen(f){
+function fileChosen(f) {
 
-  if(!f)return;
+  if (!f) return;
 
-  const r=
+  const maxSize =
+    20 * 1024 * 1024;
+
+  if (
+    f.size > maxSize
+  ) {
+
+    toast(
+      'File bahut badi hai. 20MB se chhoti file use karo.'
+    );
+
+    return;
+  }
+
+  const r =
     new FileReader();
 
-  r.onload=()=>{
+  r.onload =
+    () => {
 
-    captureUrl=
-      r.result;
+      captureUrl =
+        r.result;
 
-    captureBlob=f;
+      captureBlob =
+        f;
 
-    showCaptured(
-      currentType==='photo'
-        ? 'image'
-        : currentType
-    );
-  };
+      showCaptured(
+        currentType === 'photo'
+          ? 'image'
+          : currentType
+      );
+    };
 
   r.readAsDataURL(f);
 }
 
-function showCaptured(kind){
+function showCaptured(kind) {
 
-  const p=$('#preview');
+  const p =
+    $('#preview');
 
-  if(!p)return;
+  if (!p) return;
 
-  p.innerHTML=
-    kind==='image'
+  if (
+    kind === 'image'
+  ) {
 
-      ? `
-        <img
-          src="${captureUrl}">
-      `
+    p.innerHTML = `
+      <img
+        src="${captureUrl}"
+        alt="Selected">
+    `;
 
-      : kind==='video'
+  } else if (
+    kind === 'video'
+  ) {
 
-      ? `
-        <video
-          src="${captureUrl}"
-          controls
-          playsinline>
-        </video>
-      `
+    p.innerHTML = `
+      <video
+        src="${captureUrl}"
+        controls
+        playsinline>
+      </video>
+    `;
 
-      : `
-        <audio
-          src="${captureUrl}"
-          controls>
-        </audio>
-      `;
-}
+  } else {
 
-function blobToDataURL(b){
-
-  return new Promise(res=>{
-
-    const r=
-      new FileReader();
-
-    r.onload=()=>res(
-      r.result
-    );
-
-    r.readAsDataURL(b);
-
-  });
-}
-
-function stopStream(){
-
-  if(stream){
-
-    stream
-      .getTracks()
-      .forEach(t=>{
-        t.stop();
-      });
-
-    stream=null;
+    p.innerHTML = `
+      <audio
+        src="${captureUrl}"
+        controls>
+      </audio>
+    `;
   }
 }
 
+function blobToDataURL(b) {
+
+  return new Promise(
+    res => {
+
+      const r =
+        new FileReader();
+
+      r.onload =
+        () =>
+          res(r.result);
+
+      r.readAsDataURL(b);
+    }
+  );
+}
+
+function stopStream() {
+
+  if (stream) {
+
+    stream
+      .getTracks()
+      .forEach(
+        t => t.stop()
+      );
+
+    stream = null;
+  }
+}
+
+
 /* =========================
-   PUBLISH CHALLENGE
+   PUBLISH
 ========================= */
 
-function publishChallenge(parentId){
+function publishChallenge(
+  parentId
+) {
 
-  const title=
+  const title =
     $('#titleInput')
       .value
       .trim();
 
-  const text=
+  const text =
     $('#textInput')
       .value
       .trim();
 
-  if(!title){
+  if (!title) {
 
     toast(
-      'Challenge title likho'
+      'Challenge title likho.'
     );
 
     return;
   }
 
-  if(
-    currentType!=='text' &&
+  if (
+    currentType !== 'text' &&
     !captureUrl
-  ){
+  ) {
 
     toast(
-      'Photo/video/audio add karo'
+      'Photo, video ya audio add karo.'
     );
 
     return;
   }
 
-  const parent=
+  const parent =
     parentId
       ? state.challenges.find(
-          c=>c.id===parentId
+          c =>
+            c.id === parentId
         )
       : null;
 
-  const c={
+  const c = {
 
-    id:'c'+Date.now(),
+    id:
+      'c' +
+      Date.now(),
 
     creator:
       state.currentProfile,
@@ -1166,36 +1865,38 @@ function publishChallenge(parentId){
       Date.now(),
 
     parentId:
-      parentId||null,
+      parentId || null,
 
     generation:
       parent
-        ? parent.generation+1
+        ? parent.generation + 1
         : 1,
 
-    likes:{},
+    likes: {},
 
-    dislikes:{},
+    dislikes: {},
 
-    comments:[],
+    comments: [],
 
-    attempts:0,
+    attempts: 0,
 
     tags:
-      ($('#tagInput').value||'')
+      ($('#tagInput').value || '')
         .split(',')
-        .map(x=>x.trim())
+        .map(
+          x => x.trim()
+        )
         .filter(Boolean),
 
-    media:null
+    media: null
   };
 
-  if(captureUrl){
+  if (captureUrl) {
 
-    c.media={
+    c.media = {
 
       kind:
-        currentType==='photo'
+        currentType === 'photo'
           ? 'image'
           : currentType,
 
@@ -1206,66 +1907,78 @@ function publishChallenge(parentId){
 
   state.challenges.unshift(c);
 
-  if(parent){
+  if (parent) {
 
-    parent.attempts=
-      (parent.attempts||0)+1;
+    parent.attempts =
+      (parent.attempts || 0) +
+      1;
 
-    profile().coins+=25;
+    profile().coins += 25;
 
-  }else{
+    state.notifications.unshift({
+      text:
+        'Attempt posted. +25 coins 🔥',
+      time:
+        Date.now(),
+      read:
+        false
+    });
 
-    profile().coins+=10;
+  } else {
+
+    profile().coins += 10;
+
+    state.notifications.unshift({
+      text:
+        'Challenge created. +10 coins 🪙',
+      time:
+        Date.now(),
+      read:
+        false
+    });
   }
-
-  state.notifications.unshift({
-
-    text:
-      parent
-        ? 'Attempt posted. +25 coins 🔥'
-        : 'Challenge created. +10 coins 🪙',
-
-    time:
-      Date.now(),
-
-    read:false
-  });
 
   save();
 
+  captureBlob = null;
+  captureUrl = '';
+
   toast(
-    'Posted successfully'
+    'Posted successfully 🔥'
   );
 
   go('home');
 }
 
+
 /* =========================
-   BEAT IT
+   BEAT
 ========================= */
 
-function openBeat(id){
+function openBeat(id) {
 
   renderCreate(id);
-
 }
+
 
 /* =========================
    COMMENTS
 ========================= */
 
-function openComments(id){
+function openComments(id) {
 
-  const c=
+  const c =
     state.challenges.find(
-      x=>x.id===id
+      x => x.id === id
     );
+
+  if (!c) return;
 
   modal.classList.remove(
     'hidden'
   );
 
-  modalCard.innerHTML=`
+  modalCard.innerHTML = `
 
     <div class="modal-head">
 
@@ -1284,22 +1997,24 @@ function openComments(id){
     <div id="commentList">
 
       ${
-        (c.comments||[])
-          .map(x=>`
+        (c.comments || [])
+          .map(
+            x => `
 
-            <div class="comment">
+              <div class="comment">
 
-              <strong>
-                ${escapeHTML(x.name)}
-              </strong>
+                <strong>
+                  ${escapeHTML(x.name)}
+                </strong>
 
-              <span>
-                ${escapeHTML(x.text)}
-              </span>
+                <span>
+                  ${escapeHTML(x.text)}
+                </span>
 
-            </div>
+              </div>
 
-          `)
+            `
+          )
           .join('')
 
         ||
@@ -1317,8 +2032,7 @@ function openComments(id){
 
       <textarea
         id="commentText"
-        placeholder="Write a comment...">
-      </textarea>
+        placeholder="Write a comment..."></textarea>
 
     </div>
 
@@ -1333,19 +2047,33 @@ function openComments(id){
   `;
 }
 
-function addComment(id){
+function addComment(id) {
 
-  const txt=
-    $('#commentText')
-      .value
-      .trim();
+  const field =
+    $('#commentText');
 
-  if(!txt)return;
+  if (!field) return;
 
-  const c=
-    state.challenges.find(
-      x=>x.id===id
+  const txt =
+    field.value.trim();
+
+  if (!txt) {
+
+    toast(
+      'Comment likho.'
     );
+
+    return;
+  }
+
+  const c =
+    state.challenges.find(
+      x => x.id === id
+    );
+
+  if (!c) return;
+
+  c.comments ||= [];
 
   c.comments.push({
 
@@ -1367,7 +2095,7 @@ function addComment(id){
   openComments(id);
 }
 
-function closeModal(){
+function closeModal() {
 
   modal.classList.add(
     'hidden'
@@ -1376,17 +2104,25 @@ function closeModal(){
   stopStream();
 }
 
+
 /* =========================
    TAG FRIEND
 ========================= */
 
-function tagFriend(id){
+function tagFriend(id) {
+
+  const c =
+    state.challenges.find(
+      x => x.id === id
+    );
+
+  if (!c) return;
 
   modal.classList.remove(
     'hidden'
   );
 
-  modalCard.innerHTML=`
+  modalCard.innerHTML = `
 
     <div class="modal-head">
 
@@ -1404,9 +2140,9 @@ function tagFriend(id){
 
     <p class="muted">
 
-      Friend ka naam likho.
-      Share button se WhatsApp/other apps
-      par link bhej sakte ho.
+      Friend ka naam likho
+      aur BeatTag challenge
+      share karo.
 
     </p>
 
@@ -1423,121 +2159,160 @@ function tagFriend(id){
       style="width:100%"
       onclick="confirmTag('${id}')">
 
-      Tag & Share
+      👥 Tag & Share
 
     </button>
   `;
 }
 
-async function confirmTag(id){
+async function confirmTag(id) {
 
-  const name=
-    $('#friendName')
-      .value
-      .trim();
+  const input =
+    $('#friendName');
 
-  if(!name)return;
+  if (!input) return;
 
-  const c=
-    state.challenges.find(
-      x=>x.id===id
+  const name =
+    input.value.trim();
+
+  if (!name) {
+
+    toast(
+      'Friend ka naam likho.'
     );
+
+    return;
+  }
+
+  const c =
+    state.challenges.find(
+      x => x.id === id
+    );
+
+  if (!c) return;
 
   c.tags ||= [];
 
-  if(
+  if (
     !c.tags.includes(name)
-  ){
+  ) {
 
     c.tags.push(name);
+
+    profile().coins += 2;
+
+    state.notifications.unshift({
+      text:
+        `${name} tagged. +2 coins 🪙`,
+      time:
+        Date.now(),
+      read:
+        false
+    });
+
+    save();
   }
-
-  profile().coins+=2;
-
-  save();
 
   closeModal();
 
   toast(
-    name+
-    ' tagged • +2 coins'
+    name +
+    ' tagged 👥'
   );
 
   shareChallenge(id);
 }
 
+
 /* =========================
    SHARE
 ========================= */
 
-async function shareChallenge(id){
+async function shareChallenge(id) {
 
-  const c=
+  const c =
     state.challenges.find(
-      x=>x.id===id
+      x => x.id === id
     );
 
-  const url=
-    location.href.split('#')[0]
-    +'#challenge='
-    +id;
+  if (!c) return;
 
-  const text=
-    `🔥 BeatTag challenge: ${c.title}\nCan you beat it?`;
+  const url =
+    location.href
+      .split('#')[0] +
+    '#challenge=' +
+    id;
 
-  try{
+  const text =
+    `🔥 BeatTag Challenge\n\n${c.title}\n\nCan you beat it?`;
 
-    if(navigator.share){
+  try {
+
+    if (
+      navigator.share
+    ) {
 
       await navigator.share({
-
         title:
           'BeatTag Challenge',
-
         text,
-
         url
       });
 
-    }else{
+    } else if (
+      navigator.clipboard
+    ) {
 
-      await navigator.clipboard
+      await navigator
+        .clipboard
         .writeText(
-          text+'\n'+url
+          text +
+          '\n' +
+          url
         );
 
       toast(
-        'Challenge link copied'
+        'Challenge link copied 🔗'
+      );
+
+    } else {
+
+      window.prompt(
+        'Copy this link:',
+        url
       );
     }
 
-  }catch(e){}
+  } catch (e) {
+
+    console.log(
+      'Share cancelled'
+    );
+  }
 }
+
 
 /* =========================
    CHAINS
 ========================= */
 
-function renderChains(){
+function renderChains() {
 
-  const mine=
-    state.challenges.filter(c=>
-
-      c.creator===
-        state.currentProfile
-
-      ||
-
-      isDescendantOfMine(c)
-
+  const mine =
+    state.challenges.filter(
+      c =>
+        c.creator ===
+          state.currentProfile
+        ||
+        isDescendantOfMine(c)
     );
 
-  screenEl.innerHTML=`
+  screenEl.innerHTML = `
 
     <div class="section-title">
 
       <h2>
-        Challenge Chains
+        ⛓ Challenge Chains
       </h2>
 
       <span class="muted">
@@ -1556,12 +2331,12 @@ function renderChains(){
     </div>
   `;
 
-  const tree=$('#tree');
+  const tree =
+    $('#tree');
 
-  if(!mine.length){
+  if (!mine.length) {
 
-    tree.innerHTML=`
-
+    tree.innerHTML = `
       <div class="empty">
         No chains yet.
       </div>
@@ -1573,79 +2348,88 @@ function renderChains(){
   mine
     .slice()
     .sort(
-      (a,b)=>
-        a.generation-
+      (a, b) =>
+        a.generation -
         b.generation
     )
-    .forEach((c,i)=>{
+    .forEach(
+      (c, i) => {
 
-      if(i){
+        if (i) {
+
+          tree.insertAdjacentHTML(
+            'beforeend',
+            `
+              <div class="chain-arrow">
+                ↓
+              </div>
+            `
+          );
+        }
 
         tree.insertAdjacentHTML(
           'beforeend',
           `
-            <div class="chain-arrow">
-              ↓
+
+            <div class="chain-node">
+
+              <div class="avatar">
+                ${
+                  escapeHTML(
+                    c.creatorName
+                  )[0] || '?'
+                }
+              </div>
+
+              <div>
+
+                <strong>
+                  ${escapeHTML(c.creatorName)}
+                </strong>
+
+                <div>
+                  ${escapeHTML(c.title)}
+                </div>
+
+                <small class="muted">
+
+                  Generation ${c.generation}
+                  •
+                  ${c.attempts || 0}
+                  attempts
+
+                </small>
+
+              </div>
+
             </div>
           `
         );
       }
-
-      tree.insertAdjacentHTML(
-        'beforeend',
-        `
-          <div class="chain-node">
-
-            <div class="avatar">
-              ${c.creatorName[0]}
-            </div>
-
-            <div>
-
-              <strong>
-                ${escapeHTML(c.creatorName)}
-              </strong>
-
-              <div>
-                ${escapeHTML(c.title)}
-              </div>
-
-              <small class="muted">
-
-                Generation ${c.generation}
-                •
-                ${c.attempts||0} attempts
-
-              </small>
-
-            </div>
-
-          </div>
-        `
-      );
-    });
+    );
 }
 
-function isDescendantOfMine(c){
+function isDescendantOfMine(c) {
 
-  let p=c;
+  let p = c;
+  let guard = 0;
 
-  let guard=0;
-
-  while(
+  while (
     p?.parentId &&
-    guard++<50
-  ){
+    guard++ < 50
+  ) {
 
-    p=
+    p =
       state.challenges.find(
-        x=>x.id===p.parentId
+        x =>
+          x.id ===
+          p.parentId
       );
 
-    if(
-      p?.creator===
+    if (
+      p?.creator ===
       state.currentProfile
-    ){
+    ) {
 
       return true;
     }
@@ -1654,52 +2438,61 @@ function isDescendantOfMine(c){
   return false;
 }
 
+
 /* =========================
    PROFILE
 ========================= */
 
-function renderProfile(){
+function renderProfile() {
 
-  const p=profile();
+  const p =
+    profile();
 
-  const mine=
+  const mine =
     state.challenges.filter(
-      c=>c.creator===p.id
+      c =>
+        c.creator === p.id
     );
 
-  const likes=
+  const likes =
     mine.reduce(
-      (s,c)=>
-        s+
+      (s, c) =>
+        s +
         Object.keys(
-          c.likes||{}
+          c.likes || {}
         ).length,
       0
     );
 
-  const attempts=
+  const attempts =
     mine.reduce(
-      (s,c)=>
-        s+
-        (c.attempts||0),
+      (s, c) =>
+        s +
+        (c.attempts || 0),
       0
     );
 
-  const maxGen=
+  const maxGen =
     Math.max(
       1,
       ...mine.map(
-        c=>c.generation
+        c => c.generation
       )
     );
 
-  screenEl.innerHTML=`
+  const owned =
+    SHOP.filter(
+      item =>
+        isOwned(item.id)
+    ).length;
+
+  screenEl.innerHTML = `
 
     <section
       class="panel profile-head">
 
       <div class="profile-avatar">
-        ${p.name[0]}
+        ${escapeHTML(p.name)[0] || 'M'}
       </div>
 
       <h2>
@@ -1720,6 +2513,10 @@ function renderProfile(){
           🪙 ${p.coins} coins
         </span>
 
+        <span class="badge">
+          🎁 ${owned} items
+        </span>
+
       </div>
 
       <button
@@ -1732,6 +2529,7 @@ function renderProfile(){
       </button>
 
     </section>
+
 
     <div class="grid">
 
@@ -1785,6 +2583,7 @@ function renderProfile(){
 
     </div>
 
+
     <div class="section-title">
 
       <h2>
@@ -1794,9 +2593,7 @@ function renderProfile(){
       <button
         class="ghost"
         onclick="go('shop')">
-
-        Coin Shop
-
+        🛍 Shop
       </button>
 
     </div>
@@ -1804,38 +2601,41 @@ function renderProfile(){
     <div id="myFeed"></div>
   `;
 
-  const f=$('#myFeed');
+  const f =
+    $('#myFeed');
 
-  if(!mine.length){
+  if (!mine.length) {
 
-    f.innerHTML=`
-
+    f.innerHTML = `
       <div class="empty">
-        Create your first challenge.
+
+        Create your
+        first challenge.
+
       </div>
     `;
 
-  }else{
+  } else {
 
-    mine.forEach(c=>{
-
-      f.appendChild(
-        challengeCard(c)
-      );
-
-    });
+    mine.forEach(
+      c =>
+        f.appendChild(
+          challengeCard(c)
+        )
+    );
   }
 }
 
-function editProfile(){
+function editProfile() {
 
-  const p=profile();
+  const p =
+    profile();
 
   modal.classList.remove(
     'hidden'
   );
 
-  modalCard.innerHTML=`
+  modalCard.innerHTML = `
 
     <div class="modal-head">
 
@@ -1886,110 +2686,208 @@ function editProfile(){
   `;
 }
 
-function saveProfile(){
+function saveProfile() {
 
-  const p=profile();
+  const p =
+    profile();
 
-  p.name=
-    $('#epName').value.trim()
-    ||
+  p.name =
+    $('#epName')
+      .value
+      .trim() ||
     p.name;
 
-  p.handle=
-    $('#epHandle').value.trim()
-    ||
+  p.handle =
+    $('#epHandle')
+      .value
+      .trim() ||
     p.handle;
+
+  if (
+    !p.handle.startsWith('@')
+  ) {
+
+    p.handle =
+      '@' + p.handle;
+  }
 
   save();
 
   closeModal();
 
   renderProfile();
+
+  toast(
+    'Profile updated ✅'
+  );
 }
+
+
+/* =========================
+   SHOP ITEMS
+========================= */
+
+const SHOP = [
+
+  {
+    id: 'firepack',
+    icon: '🔥',
+    name:
+      'Fire Reaction Pack',
+    desc:
+      'Special fiery reactions',
+    cost: 100,
+    duration:
+      '7 days',
+    featured: true
+  },
+
+  {
+    id: 'frame',
+    icon: '⚡',
+    name:
+      'Neon Profile Frame',
+    desc:
+      'Premium neon profile frame',
+    cost: 300,
+    duration:
+      '30 days',
+    featured: true
+  },
+
+  {
+    id: 'theme',
+    icon: '🌌',
+    name:
+      'Galaxy Challenge Theme',
+    desc:
+      'Galaxy-style challenge cards',
+    cost: 220,
+    duration:
+      '14 days',
+    featured: true
+  },
+
+  {
+    id: 'sticker',
+    icon: '😎',
+    name:
+      'Sticker Pack',
+    desc:
+      'Extra fun stickers',
+    cost: 140,
+    duration:
+      '30 days'
+  },
+
+  {
+    id: 'trophy',
+    icon: '🏆',
+    name:
+      'Legend Trophy',
+    desc:
+      'Permanent collectible trophy',
+    cost: 1200,
+    duration:
+      'Permanent'
+  },
+
+  {
+    id: 'confetti',
+    icon: '🎉',
+    name:
+      'Victory Effect',
+    desc:
+      'Celebration effect after a win',
+    cost: 180,
+    duration:
+      '7 days'
+  },
+
+  {
+    id: 'crown',
+    icon: '👑',
+    name:
+      'Royal Crown',
+    desc:
+      'Special profile collectible',
+    cost: 500,
+    duration:
+      'Permanent'
+  },
+
+  {
+    id: 'lightning',
+    icon: '⚡',
+    name:
+      'Lightning Reaction',
+    desc:
+      'Rare reaction cosmetic',
+    cost: 160,
+    duration:
+      '14 days'
+  }
+];
+
 
 /* =========================
    SHOP
 ========================= */
 
-const SHOP=[
+function renderShop() {
 
-  {
-    id:'firepack',
-    icon:'🔥',
-    name:'Fire Reaction Pack',
-    desc:'Special fiery reaction set',
-    cost:100,
-    duration:'7 days'
-  },
+  screenEl.innerHTML = `
 
-  {
-    id:'frame',
-    icon:'⚡',
-    name:'Neon Profile Frame',
-    desc:'Animated-looking neon profile frame',
-    cost:300,
-    duration:'30 days'
-  },
+    <section class="shop-hero">
 
-  {
-    id:'theme',
-    icon:'🌌',
-    name:'Galaxy Challenge Theme',
-    desc:'Special challenge-card theme',
-    cost:220,
-    duration:'14 days'
-  },
+      <h2>
+        🛍 BeatTag Shop
+      </h2>
 
-  {
-    id:'sticker',
-    icon:'😎',
-    name:'Sticker Pack',
-    desc:'Extra challenge stickers',
-    cost:140,
-    duration:'30 days'
-  },
+      <p>
 
-  {
-    id:'trophy',
-    icon:'🏆',
-    name:'Legend Trophy',
-    desc:'Permanent collectible trophy',
-    cost:1200,
-    duration:'Permanent'
-  },
+        Challenges free hain.
+        Coins se sirf cosmetic
+        aur fun items unlock karo.
 
-  {
-    id:'confetti',
-    icon:'🎉',
-    name:'Victory Effect',
-    desc:'Celebration effect after a win',
-    cost:180,
-    duration:'7 days'
-  }
-];
+      </p>
 
-function renderShop(){
+      <div class="shop-balance">
+        🪙 ${profile().coins} Coins
+      </div>
 
-  screenEl.innerHTML=`
+    </section>
+
 
     <div class="section-title">
 
       <h2>
-        🛍 Coin Shop
+        ⭐ Featured Items
       </h2>
 
       <span class="muted">
-        🪙 ${profile().coins}
+        Popular
       </span>
 
     </div>
 
-    <p class="muted">
+    <div
+      class="shop-grid"
+      id="featuredShop">
+    </div>
 
-      Core BeatTag features are free.
-      Coins only unlock fun cosmetic items.
 
-    </p>
+    <div class="section-title">
+
+      <h2>
+        All Items
+      </h2>
+
+      <span class="muted">
+        ${SHOP.length} items
+      </span>
+
+    </div>
 
     <div
       class="shop-grid"
@@ -1997,140 +2895,211 @@ function renderShop(){
     </div>
   `;
 
-  const s=$('#shop');
+  const featured =
+    $('#featuredShop');
 
-  SHOP.forEach(it=>{
+  const all =
+    $('#shop');
 
-    const owned=
-      isOwned(it.id);
-
-    s.insertAdjacentHTML(
-      'beforeend',
-      `
-        <div class="shop-item">
-
-          <div class="shop-icon">
-            ${it.icon}
-          </div>
-
-          <h3>
-            ${it.name}
-          </h3>
-
-          <p>
-
-            ${it.desc}
-
-            <br>
-
-            ${it.duration}
-
-          </p>
-
-          <button
-            class="${owned?'secondary':'primary'}"
-            ${owned?'disabled':''}
-            onclick="buyItem('${it.id}')">
-
-            ${
-              owned
-                ? 'Unlocked'
-                : `🪙 ${it.cost}`
-            }
-
-          </button>
-
-        </div>
-      `
+  SHOP
+    .filter(
+      it => it.featured
+    )
+    .forEach(
+      it =>
+        renderShopItem(
+          featured,
+          it,
+          true
+        )
     );
-  });
+
+  SHOP.forEach(
+    it =>
+      renderShopItem(
+        all,
+        it,
+        false
+      )
+  );
 }
 
-function isOwned(id){
+function renderShopItem(
+  container,
+  it,
+  featured
+) {
 
-  const x=
+  const owned =
+    isOwned(it.id);
+
+  container.insertAdjacentHTML(
+    'beforeend',
+    `
+
+      <div
+        class="shop-item
+        ${featured
+          ? 'featured-item'
+          : ''}">
+
+        ${
+          featured
+            ? `
+              <span
+                class="shop-featured-label">
+                FEATURED
+              </span>
+            `
+            : ''
+        }
+
+        <div class="shop-icon">
+          ${it.icon}
+        </div>
+
+        <h3>
+          ${it.name}
+        </h3>
+
+        <p>
+
+          ${it.desc}
+
+          <br>
+
+          ${it.duration}
+
+        </p>
+
+        <button
+          class="${
+            owned
+              ? 'secondary'
+              : 'primary'
+          }"
+
+          ${
+            owned
+              ? 'disabled'
+              : ''
+          }
+
+          onclick="buyItem('${it.id}')">
+
+          ${
+            owned
+              ? '✓ Unlocked'
+              : `🪙 ${it.cost}`
+          }
+
+        </button>
+
+      </div>
+    `
+  );
+}
+
+function isOwned(id) {
+
+  const x =
     state.purchases.find(
-      p=>
-        p.profile===
+      p =>
+        p.profile ===
           state.currentProfile
         &&
-        p.item===id
+        p.item === id
     );
 
-  if(!x)return false;
+  if (!x) return false;
 
-  if(!x.expiresAt){
+  if (!x.expiresAt) {
     return true;
   }
 
-  return x.expiresAt>
-    Date.now();
+  return (
+    x.expiresAt >
+    Date.now()
+  );
 }
 
-function buyItem(id){
+function buyItem(id) {
 
-  const it=
+  const it =
     SHOP.find(
-      x=>x.id===id
+      x => x.id === id
     );
 
-  const p=profile();
+  const p =
+    profile();
 
-  if(isOwned(id)){
-    return;
-  }
+  if (!it) return;
 
-  if(p.coins<it.cost){
+  if (isOwned(id)) {
 
     toast(
-      'Not enough coins'
+      'Already unlocked ✅'
     );
 
     return;
   }
 
-  p.coins-=it.cost;
+  if (
+    p.coins < it.cost
+  ) {
 
-  let exp=null;
+    toast(
+      'Not enough coins 🪙'
+    );
 
-  if(
+    return;
+  }
+
+  p.coins -=
+    it.cost;
+
+  let exp = null;
+
+  if (
     it.duration.includes(
       '7 days'
     )
-  ){
+  ) {
 
-    exp=
-      Date.now()+
-      7*864e5;
+    exp =
+      Date.now() +
+      7 * 864e5;
   }
 
-  if(
+  if (
     it.duration.includes(
       '14 days'
     )
-  ){
+  ) {
 
-    exp=
-      Date.now()+
-      14*864e5;
+    exp =
+      Date.now() +
+      14 * 864e5;
   }
 
-  if(
+  if (
     it.duration.includes(
       '30 days'
     )
-  ){
+  ) {
 
-    exp=
-      Date.now()+
-      30*864e5;
+    exp =
+      Date.now() +
+      30 * 864e5;
   }
 
   state.purchases.push({
 
-    profile:p.id,
+    profile:
+      p.id,
 
-    item:id,
+    item:
+      id,
 
     boughtAt:
       Date.now(),
@@ -2139,26 +3108,41 @@ function buyItem(id){
       exp
   });
 
+  state.notifications.unshift({
+
+    text:
+      `${it.name} unlocked 🎁`,
+
+    time:
+      Date.now(),
+
+    read:
+      false
+  });
+
   save();
 
   toast(
-    it.name+
-    ' unlocked'
+    it.name +
+    ' unlocked 🎉'
   );
 
   renderShop();
 }
 
+
 /* =========================
    NOTIFICATIONS
 ========================= */
 
-function openNotifications(){
+function openNotifications() {
 
   state.notifications
-    .forEach(n=>{
-      n.read=true;
-    });
+    .forEach(
+      n => {
+        n.read = true;
+      }
+    );
 
   save();
 
@@ -2166,12 +3150,12 @@ function openNotifications(){
     'hidden'
   );
 
-  modalCard.innerHTML=`
+  modalCard.innerHTML = `
 
     <div class="modal-head">
 
       <h3>
-        Notifications
+        🔔 Notifications
       </h3>
 
       <button
@@ -2184,21 +3168,23 @@ function openNotifications(){
 
     ${
       state.notifications
-        .map(n=>`
+        .map(
+          n => `
 
-          <div class="comment">
+            <div class="comment">
 
-            <strong>
-              ${escapeHTML(n.text)}
-            </strong>
+              <strong>
+                ${escapeHTML(n.text)}
+              </strong>
 
-            <span>
-              ${fmt(n.time)}
-            </span>
+              <span>
+                ${fmt(n.time)}
+              </span>
 
-          </div>
+            </div>
 
-        `)
+          `
+        )
         .join('')
 
       ||
@@ -2212,71 +3198,86 @@ function openNotifications(){
   `;
 }
 
+
 /* =========================
-   SECURITY / ESCAPE
+   SECURITY
 ========================= */
 
-function escapeHTML(s=''){
+function escapeHTML(s = '') {
 
   return String(s)
     .replace(
       /[&<>"']/g,
-      m=>({
-        '&':'&amp;',
-        '<':'&lt;',
-        '>':'&gt;',
-        '"':'&quot;',
-        "'":'&#39;'
+      m => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
       }[m])
     );
 }
 
-function escapeAttr(s=''){
+function escapeAttr(s = '') {
 
   return escapeHTML(s);
-
 }
+
 
 /* =========================
    SHARED CHALLENGE LINK
 ========================= */
 
+function checkSharedChallenge() {
+
+  const m =
+    location.hash.match(
+      /challenge=([^&]+)/
+    );
+
+  if (!m) return;
+
+  const id =
+    decodeURIComponent(
+      m[1]
+    );
+
+  const c =
+    state.challenges.find(
+      x => x.id === id
+    );
+
+  if (c) {
+
+    renderHome();
+
+    setTimeout(
+      () => {
+
+        toast(
+          'Challenge opened: ' +
+          c.title
+        );
+
+      },
+      150
+    );
+  }
+}
+
 window.addEventListener(
   'hashchange',
-  ()=>{
-
-    const m=
-      location.hash.match(
-        /challenge=(.+)/
-      );
-
-    if(m){
-
-      const c=
-        state.challenges.find(
-          x=>x.id===m[1]
-        );
-
-      if(c){
-
-        renderHome();
-
-        setTimeout(
-          ()=>toast(
-            'Challenge opened: '+
-            c.title
-          ),
-          100
-        );
-      }
-    }
-  }
+  checkSharedChallenge
 );
+
 
 /* =========================
    START APP
 ========================= */
 
 updateCoins();
+updateNotificationDot();
 
 go('home');
+
+checkSharedChallenge();
