@@ -2096,68 +2096,252 @@ function publishChallenge(
         .map(
           x => x.trim()
         )
-        .filter(Boolean),
+async function publishChallenge(parentId) {
 
-    media: null
-  };
+  const title =
+    $('#titleInput')
+      .value
+      .trim();
 
-  if (captureUrl) {
+  const text =
+    $('#textInput')
+      .value
+      .trim();
 
-    c.media = {
+  if (!title) {
+    toast('Challenge title likho.');
+    return;
+  }
 
-      kind:
-        currentType === 'photo'
-          ? 'image'
-          : currentType,
+  if (
+    currentType !== 'text' &&
+    !captureUrl
+  ) {
+    toast('Photo, video ya audio add karo.');
+    return;
+  }
 
-      data:
-        captureUrl
+  /* Media ko next step me Supabase Storage se connect karenge */
+  if (currentType !== 'text') {
+
+    toast(
+      'Photo/video/audio cloud upload next step me connect karenge.'
+    );
+
+    return;
+  }
+
+  const postBtn =
+    $('#postBtn');
+
+  if (postBtn) {
+    postBtn.disabled = true;
+    postBtn.textContent = 'Posting...';
+  }
+
+  try {
+
+    /* Logged-in Supabase user */
+    const {
+      data: { user },
+      error: userError
+    } =
+      await supabaseClient.auth.getUser();
+
+    if (userError) {
+      throw userError;
+    }
+
+    if (!user) {
+      toast('Pehle login karo.');
+      showAuthScreen();
+      return;
+    }
+
+    /* Local parent challenge */
+    const parent =
+      parentId
+        ? state.challenges.find(
+            c => c.id === parentId
+          )
+        : null;
+
+    const generation =
+      parent
+        ? (parent.generation || 1) + 1
+        : 1;
+
+    /* Supabase UUID check */
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+    const realParentId =
+      parentId &&
+      uuidRegex.test(parentId)
+        ? parentId
+        : null;
+
+    /* Save real challenge in Supabase */
+    const {
+      data: newChallenge,
+      error: insertError
+    } =
+      await supabaseClient
+        .from('challenges')
+        .insert({
+          creator_id: user.id,
+          parent_id: realParentId,
+          title: title,
+          description: text,
+          challenge_type: currentType,
+          media_url: null,
+          generation: generation,
+          attempts_count: 0,
+          views_count: 0,
+          status: 'active'
+        })
+        .select()
+        .single();
+
+    if (insertError) {
+      throw insertError;
+    }
+
+    /* Local UI copy */
+    const c = {
+
+      id: newChallenge.id,
+
+      creator: user.id,
+
+      creatorName:
+        profile().name,
+
+      title: newChallenge.title,
+
+      type:
+        newChallenge.challenge_type,
+
+      text:
+        newChallenge.description || '',
+
+      createdAt:
+        new Date(
+          newChallenge.created_at
+        ).getTime(),
+
+      parentId:
+        newChallenge.parent_id,
+
+      generation:
+        newChallenge.generation || 1,
+
+      likes: {},
+
+      dislikes: {},
+
+      comments: [],
+
+      attempts:
+        newChallenge.attempts_count || 0,
+
+      tags:
+        ($('#tagInput')?.value || '')
+          .split(',')
+          .map(x => x.trim())
+          .filter(Boolean),
+
+      media: null
     };
+
+    state.challenges.unshift(c);
+
+    /* Coins */
+    const reward =
+      parent ? 25 : 10;
+
+    const newCoins =
+      (profile().coins || 0) +
+      reward;
+
+    const {
+      error: coinError
+    } =
+      await supabaseClient
+        .from('profiles')
+        .update({
+          coins: newCoins
+        })
+        .eq(
+          'id',
+          user.id
+        );
+
+    if (!coinError) {
+      profile().coins =
+        newCoins;
+    }
+
+    if (parent) {
+
+      parent.attempts =
+        (parent.attempts || 0) + 1;
+
+      state.notifications.unshift({
+        text:
+          `Attempt posted. +${reward} coins 🔥`,
+        time:
+          Date.now(),
+        read:
+          false
+      });
+
+    } else {
+
+      state.notifications.unshift({
+        text:
+          `Challenge created. +${reward} coins 🪙`,
+        time:
+          Date.now(),
+        read:
+          false
+      });
+    }
+
+    save();
+
+    captureBlob = null;
+    captureUrl = '';
+
+    toast(
+      'Challenge database me post ho gaya 🔥'
+    );
+
+    go('home');
+
+  } catch (error) {
+
+    console.error(
+      'Publish error:',
+      error
+    );
+
+    toast(
+      error.message ||
+      'Challenge post nahi hua.'
+    );
+
+  } finally {
+
+    if (postBtn) {
+      postBtn.disabled = false;
+
+      postBtn.textContent =
+        parentId
+          ? '🔥 Post Attempt'
+          : '🚀 Publish Challenge';
+    }
   }
-
-  state.challenges.unshift(c);
-
-  if (parent) {
-
-    parent.attempts =
-      (parent.attempts || 0) +
-      1;
-
-    profile().coins += 25;
-
-    state.notifications.unshift({
-      text:
-        'Attempt posted. +25 coins 🔥',
-      time:
-        Date.now(),
-      read:
-        false
-    });
-
-  } else {
-
-    profile().coins += 10;
-
-    state.notifications.unshift({
-      text:
-        'Challenge created. +10 coins 🪙',
-      time:
-        Date.now(),
-      read:
-        false
-    });
-  }
-
-  save();
-
-  captureBlob = null;
-  captureUrl = '';
-
-  toast(
-    'Posted successfully 🔥'
-  );
-
-  go('home');
 }
 
 
