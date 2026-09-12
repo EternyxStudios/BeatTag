@@ -2582,40 +2582,42 @@ function fileChosen(f) {
 
   if (!f) return;
 
-  const maxSize =
-    20 * 1024 * 1024;
+  let maxSize;
 
-  if (
-    f.size > maxSize
-  ) {
+  if (currentType === 'photo') {
+    maxSize = 10 * 1024 * 1024; // 10 MB
+  } else if (currentType === 'video') {
+    maxSize = 50 * 1024 * 1024; // 50 MB
+  } else {
+    maxSize = 20 * 1024 * 1024; // 20 MB audio
+  }
+
+  if (f.size > maxSize) {
+
+    const limit =
+      currentType === 'photo'
+        ? '10MB'
+        : currentType === 'video'
+        ? '50MB'
+        : '20MB';
 
     toast(
-      'File bahut badi hai. 20MB se chhoti file use karo.'
+      `File bahut badi hai. ${limit} se chhoti file use karo.`
     );
 
     return;
   }
 
-  const r =
-    new FileReader();
+  captureBlob = f;
 
-  r.onload =
-    () => {
+  captureUrl =
+    URL.createObjectURL(f);
 
-      captureUrl =
-        r.result;
-
-      captureBlob =
-        f;
-
-      showCaptured(
-        currentType === 'photo'
-          ? 'image'
-          : currentType
-      );
-    };
-
-  r.readAsDataURL(f);
+  showCaptured(
+    currentType === 'photo'
+      ? 'image'
+      : currentType
+  );
 }
 
 function showCaptured(kind) {
@@ -2689,6 +2691,57 @@ function stopStream() {
   }
 }
 
+async function uploadChallengeMedia(file) {
+
+  if (!file) return null;
+
+  if (!currentUserId) {
+    throw new Error('User login nahi hai.');
+  }
+
+  const mime = file.type || '';
+
+  let extension = 'bin';
+
+  if (mime.includes('jpeg')) extension = 'jpg';
+  else if (mime.includes('png')) extension = 'png';
+  else if (mime.includes('webp')) extension = 'webp';
+  else if (mime.includes('mp4')) extension = 'mp4';
+  else if (mime.includes('webm')) extension = 'webm';
+  else if (mime.includes('mpeg')) extension = 'mp3';
+  else if (mime.includes('wav')) extension = 'wav';
+
+  const filePath =
+    `${currentUserId}/${Date.now()}-${crypto.randomUUID()}.${extension}`;
+
+  const { error: uploadError } =
+    await supabaseClient.storage
+      .from('challenge-media')
+      .upload(
+        filePath,
+        file,
+        {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: file.type
+        }
+      );
+
+  if (uploadError) {
+    throw uploadError;
+  }
+
+  const { data } =
+    supabaseClient.storage
+      .from('challenge-media')
+      .getPublicUrl(filePath);
+
+  if (!data?.publicUrl) {
+    throw new Error('Media URL nahi mila.');
+  }
+
+  return data.publicUrl;
+}
 
 /* =========================
    PUBLISH
@@ -2719,14 +2772,18 @@ async function publishChallenge(parentId) {
     return;
   }
 
-  /* Media ko next step me Supabase Storage se connect karenge */
-  if (currentType !== 'text') {
+    let mediaUrl = null;
 
-    toast(
-      'Photo/video/audio cloud upload next step me connect karenge.'
-    );
+  if (
+    currentType !== 'text' &&
+    captureBlob
+  ) {
+    toast('Media upload ho raha hai...');
 
-    return;
+    mediaUrl =
+      await uploadChallengeMedia(
+        captureBlob
+      );
   }
 
   const postBtn =
@@ -2849,7 +2906,15 @@ async function publishChallenge(parentId) {
           .map(x => x.trim())
           .filter(Boolean),
 
-      media: null
+      media: mediaUrl
+  ? {
+      kind:
+        currentType === 'photo'
+          ? 'image'
+          : currentType,
+      data: mediaUrl
+    }
+  : null
     };
 
     state.challenges.unshift(c);
