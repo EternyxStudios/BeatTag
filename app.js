@@ -1245,6 +1245,11 @@ function challengeCard(c) {
   ).onclick =
     () =>
       shareChallenge(c.id);
+  n.querySelector(
+  '.dots'
+).onclick =
+  () =>
+    openChallengeMenu(c.id);
 
   const taggedNames =
   (c.tags || []).length
@@ -1258,6 +1263,166 @@ n.querySelector(
 
 
   return n;
+}
+function openChallengeMenu(id) {
+
+  const c =
+    state.challenges.find(
+      x => x.id === id
+    );
+
+  if (!c) return;
+
+  const isMine =
+    c.creator === currentUserId;
+
+  modal.classList.remove('hidden');
+
+  modalCard.innerHTML = `
+    <div class="modal-head">
+      <h3>Challenge Options</h3>
+
+      <button
+        class="close"
+        onclick="closeModal()">
+        ×
+      </button>
+    </div>
+
+    <div style="
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:15px;
+    ">
+
+      ${
+        isMine
+          ? `
+            <button
+              class="secondary"
+              onclick="editChallenge('${c.id}')">
+              ✏️ Edit Challenge
+            </button>
+          `
+          : ''
+      }
+
+      <button
+        class="secondary"
+        onclick="
+          closeModal();
+          shareChallenge('${c.id}');
+        ">
+        📤 Share Challenge
+      </button>
+
+      ${
+        isMine
+          ? `
+            <button
+              class="secondary"
+              onclick="
+                closeModal();
+                deleteChallenge('${c.id}');
+              ">
+              🗑 Delete Challenge
+            </button>
+          `
+          : `
+            <button
+              class="secondary"
+              onclick="reportChallenge('${c.id}')">
+              🚩 Report Challenge
+            </button>
+          `
+      }
+
+    </div>
+  `;
+}
+async function editChallenge(id) {
+
+  const c =
+    state.challenges.find(
+      x => x.id === id
+    );
+
+  if (!c) return;
+
+  if (c.creator !== currentUserId) {
+    toast('Sirf apna challenge edit kar sakte ho.');
+    return;
+  }
+
+  const newTitle =
+    prompt(
+      'Challenge title:',
+      c.title
+    );
+
+  if (newTitle === null) return;
+
+  const cleanTitle =
+    newTitle.trim();
+
+  if (!cleanTitle) {
+    toast('Title empty nahi ho sakta.');
+    return;
+  }
+
+  const newText =
+    prompt(
+      'Challenge message / rules:',
+      c.text || ''
+    );
+
+  if (newText === null) return;
+
+  try {
+
+    const { error } =
+      await supabaseClient
+        .from('challenges')
+        .update({
+          title: cleanTitle,
+          description: newText.trim()
+        })
+        .eq('id', id)
+        .eq('creator_id', currentUserId);
+
+    if (error) throw error;
+
+    c.title = cleanTitle;
+    c.text = newText.trim();
+
+    save();
+
+    closeModal();
+    renderHome();
+
+    toast('Challenge updated ✅');
+
+  } catch (err) {
+
+    console.error(
+      'Edit challenge error:',
+      err
+    );
+
+    toast(
+      err.message ||
+      'Challenge edit nahi hua.'
+    );
+  }
+}
+
+
+function reportChallenge(id) {
+
+  closeModal();
+
+  toast('Report received 🚩');
 }
 
 async function deleteChallenge(id) {
