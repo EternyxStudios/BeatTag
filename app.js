@@ -3943,3 +3943,60 @@ updateNotificationDot();
 go('home');
 
 checkSharedChallenge();
+// ===============================
+// BEATTAG SUPABASE REALTIME
+// ===============================
+
+const beatTagRealtime = supabaseClient
+  .channel('beattag-live')
+  .on(
+    'postgres_changes',
+    {
+      event: '*',
+      schema: 'public',
+      table: 'challenges'
+    },
+    async () => {
+      await loadChallengesFromSupabase();
+      go('home');
+    }
+  )
+  .on(
+    'postgres_changes',
+    {
+      event: '*',
+      schema: 'public',
+      table: 'reactions'
+    },
+    async () => {
+      await loadReactionsFromSupabase();
+      renderHome();
+    }
+  )
+  .on(
+    'postgres_changes',
+    {
+      event: '*',
+      schema: 'public',
+      table: 'comments'
+    },
+    async () => {
+      await loadCommentsFromSupabase();
+      renderHome();
+    }
+  )
+  .on(
+    'postgres_changes',
+    {
+      event: '*',
+      schema: 'public',
+      table: 'challenge_tags'
+    },
+    async () => {
+      await loadTagsFromSupabase();
+      renderHome();
+    }
+  )
+  .subscribe((status) => {
+    console.log('BeatTag Realtime:', status);
+  });
