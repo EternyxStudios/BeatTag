@@ -1420,9 +1420,124 @@ async function editChallenge(id) {
 
 function reportChallenge(id) {
 
-  closeModal();
+  const c = state.challenges.find(
+    x => x.id === id
+  );
 
-  toast('Report received 🚩');
+  if (!c) return;
+
+  if (c.creator === currentUserId) {
+    closeModal();
+    toast('Apna challenge report nahi kar sakte.');
+    return;
+  }
+
+  modal.classList.remove('hidden');
+
+  modalCard.innerHTML = `
+    <div class="modal-head">
+      <h3>🚩 Report Challenge</h3>
+
+      <button
+        class="close"
+        onclick="closeModal()">
+        ×
+      </button>
+    </div>
+
+    <p style="margin-top:10px;">
+      Is challenge ko report kyun kar rahe ho?
+    </p>
+
+    <select
+      id="reportReason"
+      style="width:100%; margin-top:12px;">
+      <option value="">Select reason</option>
+      <option value="spam">Spam</option>
+      <option value="harassment">Harassment</option>
+      <option value="dangerous">Dangerous Challenge</option>
+      <option value="inappropriate">Inappropriate Content</option>
+      <option value="other">Other</option>
+    </select>
+
+    <textarea
+      id="reportDetails"
+      placeholder="Additional details (optional)"
+      style="width:100%; margin-top:12px;">
+    </textarea>
+
+    <button
+      class="primary"
+      style="width:100%; margin-top:15px;"
+      onclick="submitChallengeReport('${id}')">
+      Submit Report
+    </button>
+  `;
+}
+
+
+async function submitChallengeReport(id) {
+
+  const reason =
+    document
+      .getElementById('reportReason')
+      ?.value;
+
+  const details =
+    document
+      .getElementById('reportDetails')
+      ?.value
+      .trim();
+
+  if (!reason) {
+    toast('Report reason select karo.');
+    return;
+  }
+
+  if (!currentUserId) {
+    toast('Please login first.');
+    return;
+  }
+
+  try {
+
+    const { error } =
+      await supabaseClient
+        .from('reports')
+        .insert({
+          challenge_id: id,
+          reported_by: currentUserId,
+          reason: reason,
+          details: details || null
+        });
+
+    if (error) {
+
+      if (error.code === '23505') {
+        closeModal();
+        toast('Aap is challenge ko already report kar chuke ho.');
+        return;
+      }
+
+      throw error;
+    }
+
+    closeModal();
+
+    toast('Report submitted successfully 🚩');
+
+  } catch (err) {
+
+    console.error(
+      'Report challenge error:',
+      err
+    );
+
+    toast(
+      err.message ||
+      'Report submit nahi hua.'
+    );
+  }
 }
 
 async function deleteChallenge(id) {
