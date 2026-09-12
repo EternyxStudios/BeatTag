@@ -2849,7 +2849,7 @@ async function publishChallenge(parentId) {
           title: title,
           description: text,
           challenge_type: currentType,
-          media_url: null,
+          media_url: mediaUrl,
           generation: generation,
           attempts_count: 0,
           views_count: 0,
