@@ -466,18 +466,7 @@ async function loadChallengesFromSupabase() {
       };
     });
 
-    const localOnly = state.challenges.filter(
-      localChallenge =>
-        !cloudChallenges.some(
-          cloudChallenge =>
-            cloudChallenge.id === localChallenge.id
-        )
-    );
-
-    state.challenges = [
-      ...cloudChallenges,
-      ...localOnly
-    ];
+    state.challenges = cloudChallenges;
 
     save();
 
