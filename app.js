@@ -149,6 +149,7 @@ async function initAuth() {
 
   if (session) {
     await loadRealProfile();
+    await checkAdmin();
     await loadChallengesFromSupabase();
     await loadReactionsFromSupabase();
     await loadCommentsFromSupabase();
@@ -222,6 +223,35 @@ async function loadRealProfile() {
     }
   } catch (err) {
     console.error("Profile error:", err);
+  }
+}
+let isAdmin = false;
+
+async function checkAdmin() {
+  try {
+    if (!currentUserId) {
+      isAdmin = false;
+      return;
+    }
+
+    const { data, error } =
+      await supabaseClient
+        .from('admins')
+        .select('user_id')
+        .eq('user_id', currentUserId)
+        .maybeSingle();
+
+    if (error) {
+      console.error('Admin check error:', error);
+      isAdmin = false;
+      return;
+    }
+
+    isAdmin = !!data;
+
+  } catch (err) {
+    console.error('Admin check error:', err);
+    isAdmin = false;
   }
 }
 async function loadReactionsFromSupabase() {
@@ -3600,6 +3630,19 @@ function renderProfile() {
 
     </div>
 
+    ${isAdmin ? `
+  <section class="panel" style="margin-bottom:16px;">
+    <h3>🛡️ Admin Panel</h3>
+
+    <button
+      class="primary"
+      style="width:100%; margin-top:10px;"
+      onclick="renderAdminReports()">
+      🚩 View Reports
+    </button>
+  </section>
+` : ''}
+
 
     <div class="section-title">
 
@@ -3639,6 +3682,274 @@ function renderProfile() {
         f.appendChild(
           challengeCard(c)
         )
+    );
+  }
+}
+
+async function renderAdminReports() {
+
+  if (!isAdmin) {
+    toast('Admin access required.');
+    return;
+  }
+
+  screenEl.innerHTML = `
+    <section class="panel">
+      <div class="section-title">
+        <h2>🚩 Reported Challenges</h2>
+
+        <button
+          class="ghost"
+          onclick="renderProfile()">
+          ← Back
+        </button>
+      </div>
+
+      <div id="adminReports">
+        <div class="empty">
+          Loading reports...
+        </div>
+      </div>
+    </section>
+  `;
+
+  const box =
+    document.getElementById('adminReports');
+
+  try {
+
+    const { data, error } =
+      await supabaseClient
+        .from('reports')
+        .select(`
+          id,
+          challenge_id,
+          reported_by,
+          reason,
+          details,
+          status,
+          created_at,
+          challenges (
+            id,
+            title,
+            description,
+            creator_id,
+            status
+          )
+        `)
+        .eq('status', 'pending')
+        .order('created_at', {
+          ascending: false
+        });
+
+    if (error) throw error;
+
+    if (!data || !data.length) {
+      box.innerHTML = `
+        <div class="empty">
+          ✅ No pending reports
+        </div>
+      `;
+      return;
+    }
+
+    box.innerHTML =
+      data.map(report => {
+
+        const challenge =
+          report.challenges;
+
+        return `
+          <div
+            class="panel"
+            style="margin-top:14px;">
+
+            <div class="badge">
+              🚩 ${escapeHTML(
+                report.reason || 'Report'
+              )}
+            </div>
+
+            <h3 style="margin-top:10px;">
+              ${escapeHTML(
+                challenge?.title ||
+                'Challenge unavailable'
+              )}
+            </h3>
+
+            ${
+              challenge?.description
+                ? `
+                  <p class="muted">
+                    ${escapeHTML(
+                      challenge.description
+                    )}
+                  </p>
+                `
+                : ''
+            }
+
+            ${
+              report.details
+                ? `
+                  <p style="margin-top:10px;">
+                    <strong>Report details:</strong>
+                    ${escapeHTML(report.details)}
+                  </p>
+                `
+                : ''
+            }
+
+            <div
+              class="muted"
+              style="margin-top:8px;">
+
+              ${new Date(
+                report.created_at
+              ).toLocaleString()}
+
+            </div>
+
+            <div
+              style="
+                display:flex;
+                gap:8px;
+                margin-top:14px;
+                flex-wrap:wrap;
+              ">
+
+              <button
+                class="primary"
+                onclick="adminRemoveChallenge(
+                  '${report.id}',
+                  '${report.challenge_id}'
+                )">
+                🗑 Remove Challenge
+              </button>
+
+              <button
+                class="secondary"
+                onclick="adminDismissReport(
+                  '${report.id}'
+                )">
+                ✅ Dismiss Report
+              </button>
+
+            </div>
+
+          </div>
+        `;
+      }).join('');
+
+  } catch (err) {
+
+    console.error(
+      'Load admin reports error:',
+      err
+    );
+
+    box.innerHTML = `
+      <div class="empty">
+        Reports load nahi hue.
+      </div>
+    `;
+  }
+}
+
+
+async function adminDismissReport(
+  reportId
+) {
+
+  if (!isAdmin) return;
+
+  try {
+
+    const { error } =
+      await supabaseClient
+        .from('reports')
+        .update({
+          status: 'dismissed'
+        })
+        .eq('id', reportId);
+
+    if (error) throw error;
+
+    toast('Report dismissed ✅');
+
+    await renderAdminReports();
+
+  } catch (err) {
+
+    console.error(
+      'Dismiss report error:',
+      err
+    );
+
+    toast(
+      err.message ||
+      'Report dismiss nahi hua.'
+    );
+  }
+}
+
+
+async function adminRemoveChallenge(
+  reportId,
+  challengeId
+) {
+
+  if (!isAdmin) return;
+
+  const ok =
+    confirm(
+      'Is challenge ko BeatTag se remove karna hai?'
+    );
+
+  if (!ok) return;
+
+  try {
+
+    const { error: challengeError } =
+      await supabaseClient
+        .from('challenges')
+        .update({
+          status: 'removed'
+        })
+        .eq('id', challengeId);
+
+    if (challengeError) {
+      throw challengeError;
+    }
+
+    const { error: reportError } =
+      await supabaseClient
+        .from('reports')
+        .update({
+          status: 'actioned'
+        })
+        .eq('id', reportId);
+
+    if (reportError) {
+      throw reportError;
+    }
+
+    await loadChallengesFromSupabase();
+
+    toast('Challenge removed 🗑');
+
+    await renderAdminReports();
+
+  } catch (err) {
+
+    console.error(
+      'Admin remove challenge error:',
+      err
+    );
+
+    toast(
+      err.message ||
+      'Challenge remove nahi hua.'
     );
   }
 }
