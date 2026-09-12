@@ -151,6 +151,7 @@ async function initAuth() {
     await loadChallengesFromSupabase();
     await loadReactionsFromSupabase();
     await loadCommentsFromSupabase();
+    await loadTagsFromSupabase();
     showApp();
   } else {
     showAuthScreen();
@@ -334,6 +335,54 @@ async function loadCommentsFromSupabase() {
   } catch (err) {
     console.error(
       'loadCommentsFromSupabase error:',
+      err
+    );
+  }
+}
+async function loadTagsFromSupabase() {
+  try {
+    const { data: tags, error } =
+      await supabaseClient
+        .from('challenge_tags')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    state.challenges.forEach(c => {
+      c.tags = [];
+    });
+
+    (tags || []).forEach(tag => {
+      const challenge =
+        state.challenges.find(
+          c => c.id === tag.challenge_id
+        );
+
+      if (!challenge) return;
+
+      const name =
+        tag.tagged_name ||
+        tag.friend_name;
+
+      if (
+        name &&
+        !challenge.tags.includes(name)
+      ) {
+        challenge.tags.push(name);
+      }
+    });
+
+    save();
+
+    console.log(
+      'Supabase tags loaded:',
+      tags?.length || 0
+    );
+
+  } catch (err) {
+    console.error(
+      'loadTagsFromSupabase error:',
       err
     );
   }
@@ -2748,21 +2797,14 @@ function tagFriend(id) {
 }
 
 async function confirmTag(id) {
-
-  const input =
-    $('#friendName');
+  const input = $('#friendName');
 
   if (!input) return;
 
-  const name =
-    input.value.trim();
+  const name = input.value.trim();
 
   if (!name) {
-
-    toast(
-      'Friend ka naam likho.'
-    );
-
+    toast('Friend ka naam likho.');
     return;
   }
 
@@ -2773,36 +2815,74 @@ async function confirmTag(id) {
 
   if (!c) return;
 
-  c.tags ||= [];
+  try {
+    const {
+      data: { user },
+      error: userError
+    } =
+      await supabaseClient.auth.getUser();
 
-  if (
-    !c.tags.includes(name)
-  ) {
+    if (userError) {
+      throw userError;
+    }
 
-    c.tags.push(name);
+    if (!user) {
+      toast('Pehle login karo.');
+      return;
+    }
 
-    profile().coins += 2;
+    const uuidPattern =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-    state.notifications.unshift({
-      text:
-        `${name} tagged. +2 coins 🪙`,
-      time:
-        Date.now(),
-      read:
-        false
-    });
+    if (uuidPattern.test(id)) {
+      const { error } =
+        await supabaseClient
+          .from('challenge_tags')
+          .insert({
+            challenge_id: id,
+            tagged_by: user.id,
+            tagged_user_id: null,
+            tagged_name: name
+          });
+
+      if (error) {
+        throw error;
+      }
+    }
+
+    c.tags ||= [];
+
+    if (!c.tags.includes(name)) {
+      c.tags.push(name);
+
+      profile().coins += 2;
+
+      state.notifications.unshift({
+        text: `${name} tagged. +2 coins 🪙`,
+        time: Date.now(),
+        read: false
+      });
+    }
 
     save();
+
+    closeModal();
+
+    toast(`${name} tagged 🔥`);
+
+    shareChallenge(id);
+
+  } catch (err) {
+    console.error(
+      'Tag friend error:',
+      err
+    );
+
+    toast(
+      err.message ||
+      'Friend tag nahi hua.'
+    );
   }
-
-  closeModal();
-
-  toast(
-    name +
-    ' tagged 👥'
-  );
-
-  shareChallenge(id);
 }
 
 
