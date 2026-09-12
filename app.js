@@ -1244,10 +1244,15 @@ function challengeCard(c) {
     () =>
       shareChallenge(c.id);
 
-  n.querySelector(
-    '.chainline'
-  ).textContent =
-    `⛓ ${c.attempts || 0} attempts • Generation ${c.generation}`;
+  const taggedNames =
+  (c.tags || []).length
+    ? ` • 👥 Tagged: ${c.tags.join(', ')}`
+    : '';
+
+n.querySelector(
+  '.chainline'
+).textContent =
+  `⛓ ${c.attempts || 0} attempts • Generation ${c.generation}${taggedNames}`;
 
   return n;
 }
