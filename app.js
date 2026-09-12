@@ -11,6 +11,7 @@ const supabaseClient = supabase.createClient(
 ========================= */
 
 let authMode = "login";
+let currentUserId = null;
 
 function showAuthScreen() {
   document.getElementById("authScreen")?.classList.remove("hidden");
@@ -184,6 +185,7 @@ async function loadRealProfile() {
     } = await supabaseClient.auth.getUser();
 
     if (!user) return;
+    currentUserId = user.id;
 
     const { data: profile, error } = await supabaseClient
       .from("profiles")
@@ -1254,9 +1256,80 @@ n.querySelector(
 ).textContent =
   `⛓ ${c.attempts || 0} attempts • Generation ${c.generation}${taggedNames}`;
 
+  if (c.creator === currentUserId) {
+
+  const deleteBtn =
+    document.createElement('button');
+
+  deleteBtn.className = 'ghost';
+  deleteBtn.textContent = '🗑 Delete';
+
+  deleteBtn.style.marginTop = '10px';
+  deleteBtn.style.width = '100%';
+
+  deleteBtn.onclick = () =>
+    deleteChallenge(c.id);
+
+  article.appendChild(deleteBtn);
+}
   return n;
 }
 
+async function deleteChallenge(id) {
+
+  const challenge =
+    state.challenges.find(
+      c => c.id === id
+    );
+
+  if (!challenge) return;
+
+  if (challenge.creator !== currentUserId) {
+    toast('Sirf apna challenge delete kar sakte ho.');
+    return;
+  }
+
+  const ok = confirm(
+    `Delete "${challenge.title}"?\n\nYe action undo nahi hoga.`
+  );
+
+  if (!ok) return;
+
+  try {
+
+    const { error } =
+      await supabaseClient
+        .from('challenges')
+        .delete()
+        .eq('id', id)
+        .eq('creator_id', currentUserId);
+
+    if (error) throw error;
+
+    state.challenges =
+      state.challenges.filter(
+        c => c.id !== id
+      );
+
+    save();
+
+    renderHome();
+
+    toast('Challenge deleted 🗑');
+
+  } catch (err) {
+
+    console.error(
+      'Delete challenge error:',
+      err
+    );
+
+    toast(
+      err.message ||
+      'Challenge delete nahi hua.'
+    );
+  }
+}
 
 /* =========================
    LIKE / DISLIKE
