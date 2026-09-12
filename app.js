@@ -2951,172 +2951,172 @@ async function shareChallenge(id) {
 /* =========================
    CHAINS
 ========================= */
-async function renderChains() {
+function renderChains() {
 
-  try {
+  const challenges = state.challenges || [];
 
-    const {
-      data: { user },
-      error
-    } = await supabaseClient.auth.getUser();
+  screenEl.innerHTML = `
+    <div class="section-title">
+      <h2>⛓ Challenge Chains</h2>
+      <span class="muted">
+        ${challenges.length}
+      </span>
+    </div>
 
-    if (error) throw error;
-
-    if (!user) {
-      screenEl.innerHTML = `
-        <div class="empty">
-          Please login first.
-        </div>
-      `;
-      return;
-    }
-
-    const mine = state.challenges.filter(
-      c =>
-        c.creator === user.id ||
-        isDescendantOfUser(c, user.id)
-    );
-
-    screenEl.innerHTML = `
-
-      <div class="section-title">
-
-        <h2>
-          ⛓ Challenge Chains
-        </h2>
-
-        <span class="muted">
-          ${mine.length}
-        </span>
-
+    <div class="panel">
+      <div
+        class="chain-tree"
+        id="tree">
       </div>
+    </div>
+  `;
 
-      <div class="panel">
+  const tree = $('#tree');
 
-        <div
-          class="chain-tree"
-          id="tree">
-        </div>
-
+  if (!challenges.length) {
+    tree.innerHTML = `
+      <div class="empty">
+        No chains yet.
       </div>
     `;
+    return;
+  }
 
-    const tree = $('#tree');
+  // Root challenges = jinka parent nahi hai
+  const roots = challenges.filter(
+    c =>
+      !c.parentId ||
+      !challenges.some(
+        x => x.id === c.parentId
+      )
+  );
 
-    if (!mine.length) {
+  if (!roots.length) {
+    tree.innerHTML = `
+      <div class="empty">
+        No connected chains found.
+      </div>
+    `;
+    return;
+  }
 
-      tree.innerHTML = `
-        <div class="empty">
-          No chains yet.
-        </div>
-      `;
+  tree.innerHTML = '';
 
-      return;
-    }
+  roots
+    .slice()
+    .sort(
+      (a, b) =>
+        a.createdAt - b.createdAt
+    )
+    .forEach(root => {
 
-    mine
-      .slice()
+      const chainBox =
+        document.createElement('div');
+
+      chainBox.className =
+        'chain-group';
+
+      renderChainNode(
+        root,
+        chainBox,
+        0
+      );
+
+      tree.appendChild(chainBox);
+    });
+}
+
+
+function renderChainNode(
+  challenge,
+  container,
+  level = 0
+) {
+
+  const children =
+    state.challenges
+      .filter(
+        c =>
+          c.parentId === challenge.id
+      )
       .sort(
         (a, b) =>
-          (a.generation || 1) -
-          (b.generation || 1)
-      )
-      .forEach((c, i) => {
+          (a.createdAt || 0) -
+          (b.createdAt || 0)
+      );
 
-        if (i) {
+  const node =
+    document.createElement('div');
 
-          tree.insertAdjacentHTML(
-            'beforeend',
-            `
-              <div class="chain-arrow">
-                ↓
-              </div>
-            `
-          );
-        }
+  node.className =
+    'chain-node';
 
-        tree.insertAdjacentHTML(
-          'beforeend',
-          `
-            <div class="chain-node">
+  node.style.marginLeft =
+    `${Math.min(level, 6) * 18}px`;
 
-              <div class="avatar">
-                ${
-                  (
-                    escapeHTML(
-                      c.creatorName || '?'
-                    )[0] || '?'
-                  ).toUpperCase()
-                }
-              </div>
+  node.innerHTML = `
+    <div class="avatar">
+      ${
+        (
+          challenge.creatorName ||
+          '?'
+        )[0].toUpperCase()
+      }
+    </div>
 
-              <div>
+    <div>
+      <strong>
+        ${escapeHTML(
+          challenge.creatorName ||
+          'BeatTag User'
+        )}
+      </strong>
 
-                <strong>
-                  ${escapeHTML(c.creatorName || 'BeatTag User')}
-                </strong>
-
-                <div>
-                  ${escapeHTML(c.title)}
-                </div>
-
-                <small class="muted">
-                  Generation ${c.generation || 1}
-                  •
-                  ${c.attempts || 0} attempts
-                </small>
-
-              </div>
-
-            </div>
-          `
-        );
-
-      });
-
-  } catch (err) {
-
-    console.error(
-      'renderChains error:',
-      err
-    );
-
-    screenEl.innerHTML = `
-      <div class="empty">
-        Chains load nahi hui.
+      <div>
+        ${escapeHTML(
+          challenge.title ||
+          'Untitled Challenge'
+        )}
       </div>
-    `;
-  }
-}
 
+      <small class="muted">
+        Generation
+        ${challenge.generation || 1}
+        •
+        ${children.length}
+        ${
+          children.length === 1
+            ? 'attempt'
+            : 'attempts'
+        }
+      </small>
+    </div>
+  `;
 
-function isDescendantOfUser(c, userId) {
+  container.appendChild(node);
 
-  let p = c;
-  let guard = 0;
+  children.forEach(child => {
 
-  while (
-    p?.parentId &&
-    guard++ < 50
-  ) {
+    const arrow =
+      document.createElement('div');
 
-    p = state.challenges.find(
-      x =>
-        x.id === p.parentId
+    arrow.className =
+      'chain-arrow';
+
+    arrow.style.marginLeft =
+      `${Math.min(level, 6) * 18 + 20}px`;
+
+    arrow.textContent = '↓';
+
+    container.appendChild(arrow);
+
+    renderChainNode(
+      child,
+      container,
+      level + 1
     );
-
-    if (!p) {
-      return false;
-    }
-
-    if (p.creator === userId) {
-      return true;
-    }
-  }
-
-  return false;
+  });
 }
-
 
 /* =========================
    PROFILE
