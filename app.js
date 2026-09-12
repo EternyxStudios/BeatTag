@@ -1256,22 +1256,7 @@ n.querySelector(
 ).textContent =
   `⛓ ${c.attempts || 0} attempts • Generation ${c.generation}${taggedNames}`;
 
-  if (c.creator === currentUserId) {
 
-  const deleteBtn =
-    document.createElement('button');
-
-  deleteBtn.className = 'ghost';
-  deleteBtn.textContent = '🗑 Delete';
-
-  deleteBtn.style.marginTop = '10px';
-  deleteBtn.style.width = '100%';
-
-  deleteBtn.onclick = () =>
-    deleteChallenge(c.id);
-
-  article.appendChild(deleteBtn);
-}
   return n;
 }
 
