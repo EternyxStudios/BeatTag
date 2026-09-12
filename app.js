@@ -2951,65 +2951,77 @@ async function shareChallenge(id) {
 /* =========================
    CHAINS
 ========================= */
+async function renderChains() {
 
-function renderChains() {
+  try {
 
-  const mine =
-    state.challenges.filter(
+    const {
+      data: { user },
+      error
+    } = await supabaseClient.auth.getUser();
+
+    if (error) throw error;
+
+    if (!user) {
+      screenEl.innerHTML = `
+        <div class="empty">
+          Please login first.
+        </div>
+      `;
+      return;
+    }
+
+    const mine = state.challenges.filter(
       c =>
-        c.creator ===
-          state.currentProfile
-        ||
-        isDescendantOfMine(c)
+        c.creator === user.id ||
+        isDescendantOfUser(c, user.id)
     );
 
-  screenEl.innerHTML = `
+    screenEl.innerHTML = `
 
-    <div class="section-title">
+      <div class="section-title">
 
-      <h2>
-        ⛓ Challenge Chains
-      </h2>
+        <h2>
+          ⛓ Challenge Chains
+        </h2>
 
-      <span class="muted">
-        ${mine.length}
-      </span>
+        <span class="muted">
+          ${mine.length}
+        </span>
 
-    </div>
-
-    <div class="panel">
-
-      <div
-        class="chain-tree"
-        id="tree">
       </div>
 
-    </div>
-  `;
+      <div class="panel">
 
-  const tree =
-    $('#tree');
+        <div
+          class="chain-tree"
+          id="tree">
+        </div>
 
-  if (!mine.length) {
-
-    tree.innerHTML = `
-      <div class="empty">
-        No chains yet.
       </div>
     `;
 
-    return;
-  }
+    const tree = $('#tree');
 
-  mine
-    .slice()
-    .sort(
-      (a, b) =>
-        a.generation -
-        b.generation
-    )
-    .forEach(
-      (c, i) => {
+    if (!mine.length) {
+
+      tree.innerHTML = `
+        <div class="empty">
+          No chains yet.
+        </div>
+      `;
+
+      return;
+    }
+
+    mine
+      .slice()
+      .sort(
+        (a, b) =>
+          (a.generation || 1) -
+          (b.generation || 1)
+      )
+      .forEach((c, i) => {
 
         if (i) {
 
@@ -3026,21 +3038,22 @@ function renderChains() {
         tree.insertAdjacentHTML(
           'beforeend',
           `
-
             <div class="chain-node">
 
               <div class="avatar">
                 ${
-                  escapeHTML(
-                    c.creatorName
-                  )[0] || '?'
+                  (
+                    escapeHTML(
+                      c.creatorName || '?'
+                    )[0] || '?'
+                  ).toUpperCase()
                 }
               </div>
 
               <div>
 
                 <strong>
-                  ${escapeHTML(c.creatorName)}
+                  ${escapeHTML(c.creatorName || 'BeatTag User')}
                 </strong>
 
                 <div>
@@ -3048,12 +3061,9 @@ function renderChains() {
                 </div>
 
                 <small class="muted">
-
-                  Generation ${c.generation}
+                  Generation ${c.generation || 1}
                   •
-                  ${c.attempts || 0}
-                  attempts
-
+                  ${c.attempts || 0} attempts
                 </small>
 
               </div>
@@ -3061,11 +3071,26 @@ function renderChains() {
             </div>
           `
         );
-      }
+
+      });
+
+  } catch (err) {
+
+    console.error(
+      'renderChains error:',
+      err
     );
+
+    screenEl.innerHTML = `
+      <div class="empty">
+        Chains load nahi hui.
+      </div>
+    `;
+  }
 }
 
-function isDescendantOfMine(c) {
+
+function isDescendantOfUser(c, userId) {
 
   let p = c;
   let guard = 0;
@@ -3075,18 +3100,16 @@ function isDescendantOfMine(c) {
     guard++ < 50
   ) {
 
-    p =
-      state.challenges.find(
-        x =>
-          x.id ===
-          p.parentId
-      );
+    p = state.challenges.find(
+      x =>
+        x.id === p.parentId
+    );
 
-    if (
-      p?.creator ===
-      state.currentProfile
-    ) {
+    if (!p) {
+      return false;
+    }
 
+    if (p.creator === userId) {
       return true;
     }
   }
