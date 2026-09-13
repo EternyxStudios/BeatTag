@@ -3771,6 +3771,14 @@ function renderProfile() {
         Edit Profile
 
       </button>
+      <button
+  class="secondary"
+  style="margin-top:10px; width:100%;"
+  onclick="logoutBeatTag()">
+
+  🚪 Logout
+
+</button>
 
     </section>
 
