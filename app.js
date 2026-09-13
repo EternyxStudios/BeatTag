@@ -3562,29 +3562,40 @@ function renderChainNode(
 `;
 
   container.appendChild(node);
+if (children.length) {
+
+  const branchWrap =
+    document.createElement('div');
+
+  branchWrap.className =
+    children.length > 1
+      ? 'chain-children branch'
+      : 'chain-children';
 
   children.forEach(child => {
 
-    const arrow =
+    const childWrap =
       document.createElement('div');
 
-    arrow.className =
-      'chain-arrow';
-
-    arrow.style.marginLeft =
-      `${Math.min(level, 6) * 18 + 20}px`;
-
-    arrow.textContent = '↓';
-
-    container.appendChild(arrow);
+    childWrap.className =
+      'chain-child';
 
     renderChainNode(
       child,
-      container,
+      childWrap,
       level + 1
     );
+
+    branchWrap.appendChild(
+      childWrap
+    );
   });
+
+  container.appendChild(
+    branchWrap
+  );
 }
+  
 
 /* =========================
    PROFILE
