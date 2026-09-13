@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://eternyxstudios.github.io/BeatTag/sitemap.xml
