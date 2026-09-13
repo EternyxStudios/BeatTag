@@ -3595,7 +3595,7 @@ if (children.length) {
     branchWrap
   );
 }
-  
+}
 
 /* =========================
    PROFILE
