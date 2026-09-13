@@ -720,14 +720,11 @@ main{
   position:absolute;
   left:10px;
   top:-16px;
-  bottom:32px;
+  bottom:42px;
   width:2px;
-  background:linear-gradient(
-    to bottom,
-    #a86cff,
-    rgba(168,108,255,.18)
-  );
+  background:#a86cff;
   border-radius:10px;
+  box-shadow:0 0 8px rgba(168,108,255,.35);
 }
 
 .chain-child::before{
@@ -741,15 +738,7 @@ main{
   box-shadow:0 0 8px rgba(168,108,255,.4);
 }
 
-.chain-child:last-child::after{
-  content:"";
-  position:absolute;
-  left:-18px;
-  top:44px;
-  bottom:-30px;
-  width:5px;
-  background:#0b0811;
-}
+
 
 .chain-node{
   width:100%;
