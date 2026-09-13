@@ -1725,6 +1725,9 @@ async function react(id, type) {
 
   if (!c) return;
 
+  const scrollY =
+    window.scrollY;
+
   try {
 
     const {
@@ -1797,7 +1800,14 @@ async function react(id, type) {
 
     await loadReactionsFromSupabase();
 
-    go('home');
+    renderHome();
+
+    requestAnimationFrame(() => {
+      window.scrollTo(
+        0,
+        scrollY
+      );
+    });
 
   } catch (err) {
 
@@ -1812,7 +1822,6 @@ async function react(id, type) {
     );
   }
 }
-
 
 /* =========================
    FEATURED PAGE
@@ -3685,11 +3694,10 @@ function renderProfile() {
     profile();
 
   const mine =
-    state.challenges.filter(
-      c =>
-        c.creator === p.id
-    );
-
+  state.challenges.filter(
+    c =>
+      c.creator === currentUserId
+  );
   const likes =
     mine.reduce(
       (s, c) =>
