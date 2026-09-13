@@ -112,73 +112,125 @@
   <!-- TOP HEADER -->
   <header class="topbar">
 
-   <div style="display:flex;align-items:center;gap:10px;position:relative;">
-
-  <div class="brand" onclick="go('home')">
-    BEAT<span>TAG</span>
-  </div>
-
-  <button
-    type="button"
-    onclick="toggleInfoMenu(event)"
-    aria-label="BeatTag information"
-    style="
-      width:34px;
-      height:34px;
-      border-radius:50%;
-      border:1px solid rgba(180,80,255,.35);
-      background:#160d20;
-      color:#fff;
-      font-size:22px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      cursor:pointer;
-      padding:0;
-    ">
-    ⓘ
-  </button>
+   <div
+  id="beatTagInfoMenu"
+  class="hidden"
+  style="
+    position:absolute;
+    top:50px;
+    left:0;
+    width:270px;
+    padding:12px;
+    border:1px solid rgba(196,75,255,0.45);
+    border-radius:18px;
+    background:linear-gradient(145deg,#181020,#0d0913);
+    box-shadow:
+      0 18px 45px rgba(0,0,0,0.65),
+      0 0 25px rgba(187,56,255,0.16);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+    z-index:9999;
+  "
+>
 
   <div
-    id="beatTagInfoMenu"
-    class="hidden"
     style="
-      position:absolute;
-      top:48px;
-      left:0;
-      width:260px;
-      padding:10px;
-      border:1px solid rgba(180,80,255,.35);
-      border-radius:16px;
-      background:#130b1d;
-      box-shadow:0 15px 40px rgba(0,0,0,.55);
-      z-index:9999;
-    ">
-
-    <a href="about.html" style="display:block;padding:12px;color:white;text-decoration:none;">
-      ℹ️ About
-    </a>
-
-    <a href="contact.html" style="display:block;padding:12px;color:white;text-decoration:none;">
-      ✉️ Contact
-    </a>
-
-    <a href="community-guidelines.html" style="display:block;padding:12px;color:white;text-decoration:none;">
-      👥 Community Guidelines
-    </a>
-
-    <a href="privacy.html" style="display:block;padding:12px;color:white;text-decoration:none;">
-      🔒 Privacy Policy
-    </a>
-
-    <a href="terms.html" style="display:block;padding:12px;color:white;text-decoration:none;">
-      📄 Terms & Conditions
-    </a>
-
+      padding:7px 10px 12px;
+      font-size:14px;
+      font-weight:800;
+      color:#c977ff;
+      letter-spacing:.3px;
+    "
+  >
+    ⓘ BeatTag Info
   </div>
 
-</div> 
+  <a
+    href="about.html"
+    style="
+      display:block;
+      padding:13px 14px;
+      margin:5px 0;
+      color:#ffffff;
+      text-decoration:none;
+      border-radius:12px;
+      background:rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.07);
+      font-weight:600;
+    "
+  >
+    ℹ️ &nbsp; About
+  </a>
 
+  <a
+    href="contact.html"
+    style="
+      display:block;
+      padding:13px 14px;
+      margin:5px 0;
+      color:#ffffff;
+      text-decoration:none;
+      border-radius:12px;
+      background:rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.07);
+      font-weight:600;
+    "
+  >
+    ✉️ &nbsp; Contact
+  </a>
+
+  <a
+    href="community-guidelines.html"
+    style="
+      display:block;
+      padding:13px 14px;
+      margin:5px 0;
+      color:#ffffff;
+      text-decoration:none;
+      border-radius:12px;
+      background:rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.07);
+      font-weight:600;
+    "
+  >
+    👥 &nbsp; Community Guidelines
+  </a>
+
+  <a
+    href="privacy.html"
+    style="
+      display:block;
+      padding:13px 14px;
+      margin:5px 0;
+      color:#ffffff;
+      text-decoration:none;
+      border-radius:12px;
+      background:rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.07);
+      font-weight:600;
+    "
+  >
+    🔒 &nbsp; Privacy Policy
+  </a>
+
+  <a
+    href="terms.html"
+    style="
+      display:block;
+      padding:13px 14px;
+      margin:5px 0;
+      color:#ffffff;
+      text-decoration:none;
+      border-radius:12px;
+      background:rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.07);
+      font-weight:600;
+    "
+  >
+    📄 &nbsp; Terms &amp; Conditions
+  </a>
+
+</div>
     <div class="top-actions">
 
       <button class="coin-pill" onclick="go('shop')">
