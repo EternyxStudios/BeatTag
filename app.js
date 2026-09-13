@@ -1301,8 +1301,7 @@ const parentText =
 n.querySelector(
   '.chainline'
 ).textContent =
-  `⛓ ${c.attempts || 0} attempts • Generation ${c.generation}${parentText}${taggedNames}`;
-
+  `🔗 ${c.attempts || 0} attempts • Generation ${c.generation}${parentText}${taggedNames}`;
   return n;
 }
 function openChallengeMenu(id) {
