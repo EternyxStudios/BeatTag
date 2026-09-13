@@ -620,17 +620,23 @@ main{
   border:1px solid rgba(124,60,255,.25);
   border-radius:22px;
   background:
-    radial-gradient(circle at top right,rgba(240,48,216,.10),transparent 40%),
+    radial-gradient(
+      circle at top right,
+      rgba(240,48,216,.10),
+      transparent 40%
+    ),
     rgba(20,16,30,.65);
+  overflow:hidden;
 }
 
 .chain-node{
   position:relative;
-  width:calc(100% - 4px);
-  max-width:520px;
+  width:100%;
 }
 
 .chain-card{
+  position:relative;
+  z-index:2;
   background:
     linear-gradient(145deg,#1b1428,#120d1c);
   border:1px solid #3d2a50;
@@ -688,45 +694,33 @@ main{
   font-weight:700;
 }
 
-.chain-arrow{
-  position:relative;
-  text-align:left;
-  color:#b06cff;
-  font-size:22px;
-  line-height:24px;
-  padding-left:4px;
-  text-shadow:0 0 12px rgba(176,108,255,.5);
-}
-
-/* CLEAN MOBILE CHAIN TREE */
+/* SINGLE CLEAN TREE SPINE */
 
 .chain-children{
   position:relative;
-  margin-top:16px;
+  margin-top:14px;
   padding-left:26px;
 }
 
-.chain-child{
-  position:relative;
-  margin-top:16px;
-}
-
-.chain-child > .chain-node{
-  margin-left:0 !important;
-}
-
+/* one vertical line only */
 .chain-children::before{
   content:"";
   position:absolute;
   left:10px;
-  top:-16px;
+  top:-14px;
   bottom:42px;
   width:2px;
-  background:#a86cff;
   border-radius:10px;
+  background:#a86cff;
   box-shadow:0 0 8px rgba(168,108,255,.35);
 }
 
+.chain-child{
+  position:relative;
+  margin-top:14px;
+}
+
+/* small horizontal connector */
 .chain-child::before{
   content:"";
   position:absolute;
@@ -735,24 +729,28 @@ main{
   width:16px;
   height:2px;
   background:#a86cff;
-  box-shadow:0 0 8px rgba(168,108,255,.4);
+  box-shadow:0 0 8px rgba(168,108,255,.35);
 }
 
+/* all deeper generations use same main spine */
+.chain-child > .chain-children{
+  margin-left:-26px;
+}
 
+/* don't create another parallel vertical line */
+.chain-children .chain-children::before{
+  display:none;
+}
 
-.chain-node{
+.chain-child > .chain-node{
+  margin-left:0 !important;
   width:100%;
-  max-width:none;
 }
 
-.chain-card{
-  position:relative;
-  z-index:2;
+.chain-arrow{
+  display:none;
 }
 
-.chain-group{
-  overflow:hidden;
-}
 
 /* PROFILE */
 
