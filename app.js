@@ -1602,48 +1602,88 @@ async function deleteChallenge(id) {
 
   try {
 
-    /* DELETE MEDIA FROM SUPABASE STORAGE */
-    if (challenge.media?.data) {
+    /* GET EXACT MEDIA URL FROM DATABASE */
+    const {
+      data: dbChallenge,
+      error: fetchError
+    } =
+      await supabaseClient
+        .from('challenges')
+        .select('media_url')
+        .eq('id', id)
+        .eq('creator_id', currentUserId)
+        .single();
 
-      const publicUrl =
-        challenge.media.data;
+    if (fetchError) throw fetchError;
+
+
+    /* DELETE MEDIA FROM STORAGE */
+    if (dbChallenge?.media_url) {
+
+      const mediaUrl =
+        dbChallenge.media_url;
 
       const marker =
         '/storage/v1/object/public/challenge-media/';
 
-      const index =
-        publicUrl.indexOf(marker);
+      const url =
+        new URL(mediaUrl);
 
-      if (index !== -1) {
+      const pathname =
+        decodeURIComponent(url.pathname);
 
-        const filePath =
-          decodeURIComponent(
-            publicUrl.substring(
-              index + marker.length
-            )
-          );
+      const markerIndex =
+        pathname.indexOf(marker);
 
-        const { error: storageError } =
-          await supabaseClient.storage
-            .from('challenge-media')
-            .remove([filePath]);
-
-        if (storageError) {
-          throw storageError;
-        }
+      if (markerIndex === -1) {
+        throw new Error(
+          'Storage media path nahi mila.'
+        );
       }
+
+      const filePath =
+        pathname.substring(
+          markerIndex + marker.length
+        );
+
+      console.log(
+        'Deleting Storage file:',
+        filePath
+      );
+
+      const {
+        data: removedFiles,
+        error: storageError
+      } =
+        await supabaseClient.storage
+          .from('challenge-media')
+          .remove([filePath]);
+
+      if (storageError) {
+        throw storageError;
+      }
+
+      console.log(
+        'Storage deleted:',
+        removedFiles
+      );
     }
 
-    /* DELETE CHALLENGE FROM DATABASE */
-    const { error } =
+
+    /* DELETE DATABASE CHALLENGE */
+    const { error: deleteError } =
       await supabaseClient
         .from('challenges')
         .delete()
         .eq('id', id)
         .eq('creator_id', currentUserId);
 
-    if (error) throw error;
+    if (deleteError) {
+      throw deleteError;
+    }
 
+
+    /* REMOVE FROM LOCAL STATE */
     state.challenges =
       state.challenges.filter(
         c => c.id !== id
@@ -1653,7 +1693,11 @@ async function deleteChallenge(id) {
 
     renderHome();
 
-    toast('Challenge + media deleted 🗑');
+    toast(
+      dbChallenge?.media_url
+        ? 'Challenge + media deleted 🗑'
+        : 'Challenge deleted 🗑'
+    );
 
   } catch (err) {
 
