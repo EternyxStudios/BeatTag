@@ -3414,7 +3414,7 @@ function renderChains() {
 
   screenEl.innerHTML = `
     <div class="section-title">
-      <h2>⛓ Challenge Chains</h2>
+      <h2>🔗 Challenge Chains</h2>
       <span class="muted">
         ${challenges.length}
       </span>
