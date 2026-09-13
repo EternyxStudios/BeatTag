@@ -1286,11 +1286,22 @@ function challengeCard(c) {
     ? ` • 👥 Tagged: ${c.tags.join(', ')}`
     : '';
 
+const parentChallenge =
+  c.parentId
+    ? state.challenges.find(
+        x => x.id === c.parentId
+      )
+    : null;
+
+const parentText =
+  parentChallenge
+    ? ` • ↳ Beat: ${parentChallenge.title}`
+    : '';
+
 n.querySelector(
   '.chainline'
 ).textContent =
-  `⛓ ${c.attempts || 0} attempts • Generation ${c.generation}${taggedNames}`;
-
+  `⛓ ${c.attempts || 0} attempts • Generation ${c.generation}${parentText}${taggedNames}`;
 
   return n;
 }
