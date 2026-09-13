@@ -3864,6 +3864,38 @@ function renderProfile() {
     </div>
 
     <div id="myFeed"></div>
+    <section class="panel" style="margin-top:16px;">
+  <h3 style="margin-bottom:12px;">ℹ️ BeatTag Info</h3>
+
+  <div style="display:flex; flex-direction:column; gap:10px;">
+
+    <a href="about.html" class="secondary"
+       style="text-decoration:none; padding:12px;">
+      ℹ️ About
+    </a>
+
+    <a href="contact.html" class="secondary"
+       style="text-decoration:none; padding:12px;">
+      ✉️ Contact
+    </a>
+
+    <a href="community-guidelines.html" class="secondary"
+       style="text-decoration:none; padding:12px;">
+      👥 Community Guidelines
+    </a>
+
+    <a href="privacy.html" class="secondary"
+       style="text-decoration:none; padding:12px;">
+      🔒 Privacy Policy
+    </a>
+
+    <a href="terms.html" class="secondary"
+       style="text-decoration:none; padding:12px;">
+      📄 Terms & Conditions
+    </a>
+
+  </div>
+</section>
   `;
 
   const f =
