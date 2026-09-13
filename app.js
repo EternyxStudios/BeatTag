@@ -2947,10 +2947,24 @@ async function publishChallenge(parentId) {
 
     if (parent) {
 
-      parent.attempts =
-        (parent.attempts || 0) + 1;
+  const newAttempts =
+    (parent.attempts || 0) + 1;
 
-      state.notifications.unshift({
+  const { error: attemptError } =
+    await supabaseClient
+      .from('challenges')
+      .update({
+        attempts_count: newAttempts
+      })
+      .eq('id', parent.id);
+
+  if (attemptError) {
+    throw attemptError;
+  }
+
+  parent.attempts = newAttempts;
+
+  state.notifications.unshift({
         text:
           `Attempt posted. +${reward} coins 🔥`,
         time:
