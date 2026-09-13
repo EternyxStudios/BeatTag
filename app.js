@@ -3849,8 +3849,7 @@ function renderProfile() {
 ` : ''}
 
 
-    <div class="section-title">
-    <section class="panel" style="margin-bottom:16px;">
+<section class="panel" style="margin-bottom:16px;">
   <h3 style="margin-bottom:12px;">ℹ️ BeatTag Info</h3>
 
   <div style="display:flex; flex-direction:column; gap:10px;">
@@ -3882,6 +3881,7 @@ function renderProfile() {
 
   </div>
 </section>
+    
 
       <h2>
         My Challenges
