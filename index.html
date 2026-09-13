@@ -112,9 +112,72 @@
   <!-- TOP HEADER -->
   <header class="topbar">
 
-    <div class="brand" onclick="go('home')">
-      BEAT<span>TAG</span>
-    </div>
+   <div style="display:flex;align-items:center;gap:10px;position:relative;">
+
+  <div class="brand" onclick="go('home')">
+    BEAT<span>TAG</span>
+  </div>
+
+  <button
+    type="button"
+    onclick="toggleInfoMenu(event)"
+    aria-label="BeatTag information"
+    style="
+      width:34px;
+      height:34px;
+      border-radius:50%;
+      border:1px solid rgba(180,80,255,.35);
+      background:#160d20;
+      color:#fff;
+      font-size:22px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      padding:0;
+    ">
+    ⓘ
+  </button>
+
+  <div
+    id="beatTagInfoMenu"
+    class="hidden"
+    style="
+      position:absolute;
+      top:48px;
+      left:0;
+      width:260px;
+      padding:10px;
+      border:1px solid rgba(180,80,255,.35);
+      border-radius:16px;
+      background:#130b1d;
+      box-shadow:0 15px 40px rgba(0,0,0,.55);
+      z-index:9999;
+    ">
+
+    <a href="about.html" style="display:block;padding:12px;color:white;text-decoration:none;">
+      ℹ️ About
+    </a>
+
+    <a href="contact.html" style="display:block;padding:12px;color:white;text-decoration:none;">
+      ✉️ Contact
+    </a>
+
+    <a href="community-guidelines.html" style="display:block;padding:12px;color:white;text-decoration:none;">
+      👥 Community Guidelines
+    </a>
+
+    <a href="privacy.html" style="display:block;padding:12px;color:white;text-decoration:none;">
+      🔒 Privacy Policy
+    </a>
+
+    <a href="terms.html" style="display:block;padding:12px;color:white;text-decoration:none;">
+      📄 Terms & Conditions
+    </a>
+
+  </div>
+
+</div> 
 
     <div class="top-actions">
 
@@ -284,6 +347,21 @@ if ("serviceWorker" in navigator) {
     .catch(() => {});
 }
 </script>
+<script>
+function toggleInfoMenu(event) {
+  event.stopPropagation();
 
+  const menu = document.getElementById("beatTagInfoMenu");
+  menu.classList.toggle("hidden");
+}
+
+document.addEventListener("click", function(event) {
+  const menu = document.getElementById("beatTagInfoMenu");
+
+  if (menu && !menu.contains(event.target)) {
+    menu.classList.add("hidden");
+  }
+});
+</script>
 </body>
 </html>
