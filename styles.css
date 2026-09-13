@@ -697,6 +697,72 @@ main{
   padding-left:4px;
   text-shadow:0 0 12px rgba(176,108,255,.5);
 }
+
+/* CHAIN BRANCH CONNECTIONS */
+
+.chain-children{
+  position:relative;
+  margin-top:14px;
+  padding-left:28px;
+}
+
+.chain-children::before{
+  content:"";
+  position:absolute;
+  left:14px;
+  top:-14px;
+  width:2px;
+  height:28px;
+  background:linear-gradient(
+    #9b6cff,
+    rgba(155,108,255,.35)
+  );
+}
+
+.chain-child{
+  position:relative;
+  margin-top:14px;
+}
+
+.chain-child > .chain-node{
+  margin-left:0 !important;
+}
+
+.chain-children.branch{
+  padding-left:32px;
+}
+
+.chain-children.branch::before{
+  top:-14px;
+  bottom:18px;
+  height:auto;
+  left:14px;
+  background:linear-gradient(
+    #b06cff,
+    rgba(240,48,216,.35)
+  );
+}
+
+.chain-children.branch > .chain-child::before{
+  content:"";
+  position:absolute;
+  left:-18px;
+  top:34px;
+  width:18px;
+  height:2px;
+  background:#9b6cff;
+  box-shadow:0 0 8px rgba(155,108,255,.45);
+}
+
+.chain-children.branch > .chain-child:last-child::after{
+  content:"";
+  position:absolute;
+  left:-18px;
+  top:36px;
+  bottom:-20px;
+  width:4px;
+  background:var(--panel);
+}
 /* PROFILE */
 
 .profile-head{
