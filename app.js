@@ -3512,43 +3512,54 @@ function renderChainNode(
     `${Math.min(level, 6) * 18}px`;
 
   node.innerHTML = `
-    <div class="avatar">
+  <div class="chain-card">
+
+    <div class="chain-card-top">
+
+      <div class="avatar">
+        ${
+          (
+            challenge.creatorName ||
+            '?'
+          )[0].toUpperCase()
+        }
+      </div>
+
+      <div class="chain-card-info">
+
+        <div class="chain-gen-badge">
+          Gen ${challenge.generation || 1}
+        </div>
+
+        <strong class="chain-title">
+          ${escapeHTML(
+            challenge.title ||
+            'Untitled Challenge'
+          )}
+        </strong>
+
+        <div class="chain-creator">
+          by ${escapeHTML(
+            challenge.creatorName ||
+            'BeatTag User'
+          )}
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="chain-stats">
+      🔗 ${children.length}
       ${
-        (
-          challenge.creatorName ||
-          '?'
-        )[0].toUpperCase()
+        children.length === 1
+          ? 'attempt'
+          : 'attempts'
       }
     </div>
 
-    <div>
-      <strong>
-        ${escapeHTML(
-          challenge.creatorName ||
-          'BeatTag User'
-        )}
-      </strong>
-
-      <div>
-        ${escapeHTML(
-          challenge.title ||
-          'Untitled Challenge'
-        )}
-      </div>
-
-      <small class="muted">
-        Generation
-        ${challenge.generation || 1}
-        •
-        ${children.length}
-        ${
-          children.length === 1
-            ? 'attempt'
-            : 'attempts'
-        }
-      </small>
-    </div>
-  `;
+  </div>
+`;
 
   container.appendChild(node);
 
