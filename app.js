@@ -1602,6 +1602,39 @@ async function deleteChallenge(id) {
 
   try {
 
+    /* DELETE MEDIA FROM SUPABASE STORAGE */
+    if (challenge.media?.data) {
+
+      const publicUrl =
+        challenge.media.data;
+
+      const marker =
+        '/storage/v1/object/public/challenge-media/';
+
+      const index =
+        publicUrl.indexOf(marker);
+
+      if (index !== -1) {
+
+        const filePath =
+          decodeURIComponent(
+            publicUrl.substring(
+              index + marker.length
+            )
+          );
+
+        const { error: storageError } =
+          await supabaseClient.storage
+            .from('challenge-media')
+            .remove([filePath]);
+
+        if (storageError) {
+          throw storageError;
+        }
+      }
+    }
+
+    /* DELETE CHALLENGE FROM DATABASE */
     const { error } =
       await supabaseClient
         .from('challenges')
@@ -1620,7 +1653,7 @@ async function deleteChallenge(id) {
 
     renderHome();
 
-    toast('Challenge deleted 🗑');
+    toast('Challenge + media deleted 🗑');
 
   } catch (err) {
 
