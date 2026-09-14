@@ -4025,7 +4025,6 @@ async function renderAdminReports() {
   }
 
   screenEl.innerHTML = `
-  screenEl.innerHTML = `
   <section style="
     background:linear-gradient(180deg,#15101d 0%,#0d0a12 100%);
     border:1px solid #3b2948;
