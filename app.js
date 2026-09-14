@@ -4025,24 +4025,63 @@ async function renderAdminReports() {
   }
 
   screenEl.innerHTML = `
-    <section class="panel">
-      <div class="section-title">
-        <h2>🚩 Reported Challenges</h2>
+  screenEl.innerHTML = `
+  <section style="
+    background:linear-gradient(180deg,#15101d 0%,#0d0a12 100%);
+    border:1px solid #3b2948;
+    border-radius:24px;
+    padding:18px;
+    box-shadow:0 0 30px rgba(155,60,255,.10);
+  ">
 
-        <button
-          class="ghost"
-          onclick="renderProfile()">
-          ← Back
-        </button>
+    <div style="
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:18px;
+    ">
+
+      <div>
+        <h2 style="
+          margin:0;
+          font-size:24px;
+        ">
+          🚩 Reported Challenges
+        </h2>
+
+        <p style="
+          margin:6px 0 0;
+          color:#aaa0b5;
+          font-size:14px;
+        ">
+          Review and manage reported content.
+        </p>
       </div>
 
-      <div id="adminReports">
-        <div class="empty">
-          Loading reports...
-        </div>
+      <button
+        onclick="renderProfile()"
+        style="
+          background:#17111f;
+          color:#fff;
+          border:1px solid #42304f;
+          border-radius:14px;
+          padding:10px 14px;
+          font-weight:700;
+        ">
+        ← Back
+      </button>
+
+    </div>
+
+    <div id="adminReports">
+      <div class="empty">
+        Loading reports...
       </div>
-    </section>
-  `;
+    </div>
+
+  </section>
+`;
 
   const box =
     document.getElementById('adminReports');
@@ -4091,84 +4130,157 @@ async function renderAdminReports() {
           report.challenges;
 
         return `
-          <div
-            class="panel"
-            style="margin-top:14px;">
+          <div style="
+  margin-top:16px;
+  background:linear-gradient(180deg,#181221 0%,#110d17 100%);
+  border:1px solid #5b3470;
+  border-radius:20px;
+  padding:16px;
+  box-shadow:0 0 22px rgba(174,58,255,.10);
+">
 
-            <div class="badge">
-              🚩 ${escapeHTML(
-                report.reason || 'Report'
-              )}
-            </div>
+  <div style="
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:12px;
+  ">
 
-            <h3 style="margin-top:10px;">
-              ${escapeHTML(
-                challenge?.title ||
-                'Challenge unavailable'
-              )}
-            </h3>
+    <div style="
+      display:inline-flex;
+      align-items:center;
+      gap:7px;
+      background:#2a1326;
+      color:#ff73b9;
+      border:1px solid #6b2a58;
+      border-radius:999px;
+      padding:7px 11px;
+      font-size:13px;
+      font-weight:800;
+      text-transform:capitalize;
+    ">
+      🚩 ${escapeHTML(
+        report.reason || 'Report'
+      )}
+    </div>
 
-            ${
-              challenge?.description
-                ? `
-                  <p class="muted">
-                    ${escapeHTML(
-                      challenge.description
-                    )}
-                  </p>
-                `
-                : ''
-            }
+    <div style="
+      color:#9f95aa;
+      font-size:12px;
+      white-space:nowrap;
+    ">
+      ${new Date(
+        report.created_at
+      ).toLocaleString()}
+    </div>
 
-            ${
-              report.details
-                ? `
-                  <p style="margin-top:10px;">
-                    <strong>Report details:</strong>
-                    ${escapeHTML(report.details)}
-                  </p>
-                `
-                : ''
-            }
+  </div>
 
-            <div
-              class="muted"
-              style="margin-top:8px;">
+  <h3 style="
+    margin:0 0 8px;
+    font-size:19px;
+    color:#fff;
+  ">
+    ${escapeHTML(
+      challenge?.title ||
+      'Challenge unavailable'
+    )}
+  </h3>
 
-              ${new Date(
-                report.created_at
-              ).toLocaleString()}
+  ${
+    challenge?.description
+      ? `
+        <div style="
+          background:#141019;
+          border:1px solid #2f2638;
+          border-radius:14px;
+          padding:12px;
+          color:#b9afc3;
+          line-height:1.5;
+          margin-bottom:12px;
+        ">
+          ${escapeHTML(
+            challenge.description
+          )}
+        </div>
+      `
+      : ''
+  }
 
-            </div>
-
-            <div
-              style="
-                display:flex;
-                gap:8px;
-                margin-top:14px;
-                flex-wrap:wrap;
-              ">
-
-              <button
-                class="primary"
-                onclick="adminRemoveChallenge(
-                  '${report.id}',
-                  '${report.challenge_id}'
-                )">
-                🗑 Remove Challenge
-              </button>
-
-              <button
-                class="secondary"
-                onclick="adminDismissReport(
-                  '${report.id}'
-                )">
-                ✅ Dismiss Report
-              </button>
-
-            </div>
-
+  ${
+    report.details
+      ? `
+        <div style="
+          background:#1a1220;
+          border-left:3px solid #a54cff;
+          border-radius:12px;
+          padding:11px 12px;
+          margin-bottom:14px;
+        ">
+          <div style="
+            color:#a99eb4;
+            font-size:12px;
+            font-weight:700;
+            margin-bottom:5px;
+            text-transform:uppercase;
+            letter-spacing:.4px;
+          ">
+            Report details
           </div>
+
+          <div style="
+            color:#fff;
+            line-height:1.45;
+          ">
+            ${escapeHTML(report.details)}
+          </div>
+        </div>
+      `
+      : ''
+  }
+
+  <div style="
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:14px;
+  ">
+
+    <button
+      onclick="adminRemoveChallenge(
+        '${report.id}',
+        '${report.challenge_id}'
+      )"
+      style="
+        border:none;
+        border-radius:14px;
+        padding:13px 10px;
+        font-weight:800;
+        color:#fff;
+        background:linear-gradient(90deg,#ff315d,#cf1f68);
+      ">
+      🗑 Remove
+    </button>
+
+    <button
+      onclick="adminDismissReport(
+        '${report.id}'
+      )"
+      style="
+        border:1px solid #5b4268;
+        border-radius:14px;
+        padding:13px 10px;
+        font-weight:800;
+        color:#fff;
+        background:#1b1422;
+      ">
+      ✅ Dismiss
+    </button>
+
+  </div>
+
+</div>
         `;
       }).join('');
 
