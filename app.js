@@ -147,11 +147,8 @@ async function initAuth() {
     data: { session }
   } = await supabaseClient.auth.getSession();
 
-  if (session) {
-  await Promise.all([
-    loadRealProfile(),
-    checkAdmin()
-  ]);
+  await loadRealProfile();
+await checkAdmin();
 
   await loadChallengesFromSupabase();
 
