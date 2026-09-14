@@ -1,4 +1,4 @@
-const CACHE = 'beattag-v3';
+const CACHE = 'beattag-v4';
 
 const ASSETS = [
   './',
@@ -70,6 +70,28 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // Always prefer fresh app.js and styles.css
+if (
+  url.pathname.endsWith('/app.js') ||
+  url.pathname.endsWith('/styles.css')
+) {
+  event.respondWith(
+    fetch(event.request)
+      .then(response => {
+        const copy = response.clone();
+
+        caches.open(CACHE).then(cache => {
+          cache.put(event.request, copy);
+        });
+
+        return response;
+      })
+      .catch(() => caches.match(event.request))
+  );
+
+  return;
+}
+  
   // CSS, JS, icons etc.
   event.respondWith(
     caches.match(event.request)
