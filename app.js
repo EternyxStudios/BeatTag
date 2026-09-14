@@ -445,8 +445,11 @@ async function loadChallengesFromSupabase() {
       return;
     }
 
-    if (!challenges || !challenges.length) return;
-
+    if (!challenges || !challenges.length) {
+  state.challenges = [];
+  save();
+  return;
+}
     const creatorIds = [
       ...new Set(
         challenges
@@ -875,25 +878,25 @@ function renderHome() {
     <div class="pills">
 
       <button
-        class="pill active"
+        class="pill ${currentFeedMode === 'all' ? 'active' : ''}"
         onclick="renderFeed('all',this)">
         For You
       </button>
 
       <button
-        class="pill"
+        class="pill ${currentFeedMode === 'trending' ? 'active' : ''}"
         onclick="renderFeed('trending',this)">
         🔥 Trending
       </button>
 
       <button
-        class="pill"
+        class="pill ${currentFeedMode === 'friends' ? 'active' : ''}"
         onclick="renderFeed('friends',this)">
         Friends
       </button>
 
       <button
-        class="pill"
+        class="pill ${currentFeedMode === 'new' ? 'active' : ''}"
         onclick="renderFeed('new',this)">
         New
       </button>
@@ -918,7 +921,7 @@ function renderHome() {
 
   renderFeaturedStrip();
 
-  renderFeed('all');
+  renderFeed(currentFeedMode);
 }
 
 
@@ -1068,12 +1071,28 @@ function renderFeed(
 
   } else if (mode === 'friends') {
 
-    arr =
-      arr.filter(
-        c =>
-          c.creator !==
-          state.currentProfile
-      );
+  const myName = (profile()?.name || '')
+    .trim()
+    .toLowerCase();
+
+  const myHandle = (profile()?.handle || '')
+    .replace(/^@/, '')
+    .trim()
+    .toLowerCase();
+
+  arr = arr.filter(c => {
+    const tags = (c.tags || []).map(name =>
+      String(name || '')
+        .replace(/^@/, '')
+        .trim()
+        .toLowerCase()
+    );
+
+    return tags.includes(myName) ||
+           tags.includes(myHandle);
+  });
+
+  arr.sort((a, b) => b.createdAt - a.createdAt);
 
   } else {
 
@@ -4844,7 +4863,15 @@ const beatTagRealtime = supabaseClient
     },
     async () => {
       await loadChallengesFromSupabase();
-      go('home');
+      await Promise.all([
+  loadReactionsFromSupabase(),
+  loadCommentsFromSupabase(),
+  loadTagsFromSupabase()
+]);
+
+if (currentTab === 'home') {
+  renderHome();
+}
     }
   )
   .on(
@@ -4856,7 +4883,9 @@ const beatTagRealtime = supabaseClient
     },
     async () => {
       await loadReactionsFromSupabase();
-      renderHome();
+      if (currentTab === 'home') {
+  renderHome();
+}
     }
   )
   .on(
@@ -4868,7 +4897,9 @@ const beatTagRealtime = supabaseClient
     },
     async () => {
       await loadCommentsFromSupabase();
-      renderHome();
+      if (currentTab === 'home') {
+  renderHome();
+}
     }
   )
   .on(
@@ -4880,7 +4911,9 @@ const beatTagRealtime = supabaseClient
     },
     async () => {
       await loadTagsFromSupabase();
-      renderHome();
+      if (currentTab === 'home') {
+  renderHome();
+}
     }
   )
   .subscribe((status) => {
