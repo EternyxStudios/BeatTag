@@ -148,14 +148,27 @@ async function initAuth() {
   } = await supabaseClient.auth.getSession();
 
   if (session) {
-    await loadRealProfile();
-    await checkAdmin();
-    await loadChallengesFromSupabase();
-    await loadReactionsFromSupabase();
-    await loadCommentsFromSupabase();
-    await loadTagsFromSupabase();
-    showApp();
+  await Promise.all([
+    loadRealProfile(),
+    checkAdmin()
+  ]);
+
+  await loadChallengesFromSupabase();
+
+  await Promise.all([
+    loadReactionsFromSupabase(),
+    loadCommentsFromSupabase(),
+    loadTagsFromSupabase()
+  ]);
+
+  showApp();
+
+  if (currentTab === 'home') {
+    renderHome();
   } else {
+    go(currentTab);
+  }
+} else {
     showAuthScreen();
   }
 }
@@ -701,8 +714,10 @@ function toast(msg) {
    NAVIGATION
 ========================= */
 
+let currentTab = 'home';
+let currentFeedMode = 'all';
 function go(tab) {
-
+currentTab = tab;
   stopStream();
 
   document
@@ -1013,6 +1028,7 @@ function renderFeed(
   mode = 'all',
   button = null
 ) {
+  currentFeedMode = mode;
 
   const feed = $('#feed');
 
