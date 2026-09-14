@@ -1507,44 +1507,139 @@ function reportChallenge(id) {
   modal.classList.remove('hidden');
 
   modalCard.innerHTML = `
+  <div style="
+    background:linear-gradient(180deg,#17111f 0%,#100c17 100%);
+    border:1px solid #7c3cff;
+    border-radius:24px;
+    padding:22px;
+    box-shadow:0 0 30px rgba(179,60,255,.18);
+  ">
+
     <div class="modal-head">
-      <h3>🚩 Report Challenge</h3>
+      <h3 style="
+        margin:0;
+        font-size:24px;
+        display:flex;
+        align-items:center;
+        gap:10px;
+      ">
+        🚩 Report Challenge
+      </h3>
 
       <button
         class="close"
-        onclick="closeModal()">
+        onclick="closeModal()"
+        style="
+          background:transparent;
+          border:none;
+          color:#fff;
+          font-size:28px;
+        ">
         ×
       </button>
     </div>
 
-    <p style="margin-top:10px;">
-      Is challenge ko report kyun kar rahe ho?
+    <p style="
+      margin:12px 0 16px;
+      color:#b9afc6;
+      line-height:1.5;
+    ">
+      Help us keep BeatTag safe and fun for everyone.
     </p>
+
+    <div style="
+      background:#181222;
+      border:1px solid #332640;
+      border-radius:16px;
+      padding:14px;
+      margin-bottom:20px;
+      color:#c7bdd2;
+      line-height:1.45;
+    ">
+      🟣 Your report is confidential. We'll review it and take action if it violates our guidelines.
+    </div>
+
+    <label style="
+      display:block;
+      color:#fff;
+      font-weight:700;
+      margin-bottom:8px;
+    ">
+      Reason for reporting <span style="color:#ff4d7d;">*</span>
+    </label>
 
     <select
       id="reportReason"
-      style="width:100%; margin-top:12px;">
+      style="
+        width:100%;
+        background:#15101d;
+        color:#fff;
+        border:1px solid #8a4cff;
+        border-radius:14px;
+        padding:14px 16px;
+        font-size:16px;
+        outline:none;
+        margin-bottom:18px;
+      ">
       <option value="">Select reason</option>
-      <option value="spam">Spam</option>
-      <option value="harassment">Harassment</option>
-      <option value="dangerous">Dangerous Challenge</option>
-      <option value="inappropriate">Inappropriate Content</option>
-      <option value="other">Other</option>
+      <option value="spam">🚫 Spam</option>
+      <option value="harassment">💬 Harassment or Bullying</option>
+      <option value="inappropriate">⚠️ Inappropriate Content</option>
+      <option value="dangerous">🚩 Harmful or Dangerous Challenge</option>
+      <option value="other">••• Other</option>
     </select>
+
+    <label style="
+      display:block;
+      color:#fff;
+      font-weight:700;
+      margin-bottom:8px;
+    ">
+      Additional details
+      <span style="color:#8f859b;font-weight:400;">
+        (optional)
+      </span>
+    </label>
 
     <textarea
       id="reportDetails"
-      placeholder="Additional details (optional)"
-      style="width:100%; margin-top:12px;">
-    </textarea>
+      maxlength="200"
+      placeholder="Tell us more about why you are reporting this challenge..."
+      style="
+        width:100%;
+        min-height:120px;
+        box-sizing:border-box;
+        resize:vertical;
+        background:#15101d;
+        color:#fff;
+        border:1px solid #4b3b5a;
+        border-radius:14px;
+        padding:14px;
+        font-size:16px;
+        line-height:1.5;
+        outline:none;
+        margin-bottom:18px;
+      "></textarea>
 
     <button
       class="primary"
-      style="width:100%; margin-top:15px;"
+      style="
+        width:100%;
+        border:none;
+        border-radius:16px;
+        padding:16px;
+        font-size:17px;
+        font-weight:800;
+        background:linear-gradient(90deg,#7b2cff,#ef24d5);
+        color:#fff;
+        box-shadow:0 8px 24px rgba(193,42,255,.25);
+      "
       onclick="submitChallengeReport('${id}')">
-      Submit Report
+      🚩 Submit Report
     </button>
-  `;
+
+  </div>
+`;
 }
 
 
