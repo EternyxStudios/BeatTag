@@ -4636,12 +4636,12 @@ async function showBeatTagNotification(title, body, challengeId = '') {
 ========================= */
 
 const SHOP = [
-  { id:'frame_neon', icon:'◇', name:'Neon Pulse Frame', desc:'A permanent purple-pink profile frame.', cost:300, duration:'Permanent', category:'Frames', slot:'frame', featured:true, rarity:'Epic' },
-  { id:'frame_cyber', icon:'⬡', name:'Cyber Edge Frame', desc:'A sharp neon frame for your creator profile.', cost:420, duration:'Permanent', category:'Frames', slot:'frame', rarity:'Legendary' },
-  { id:'badge_challenger', icon:'✦', name:'Challenger Badge', desc:'Show that you are here to compete.', cost:180, duration:'Permanent', category:'Badges', slot:'badge', featured:true, rarity:'Rare' },
-  { id:'badge_chainmaster', icon:'∞', name:'Chain Master Badge', desc:'A premium badge for challenge-chain builders.', cost:360, duration:'Permanent', category:'Badges', slot:'badge', rarity:'Epic' },
-  { id:'theme_galaxy', icon:'✺', name:'Galaxy Theme', desc:'Adds a cosmic accent to your BeatTag profile.', cost:240, duration:'Permanent', category:'Themes', slot:'theme', featured:true, rarity:'Epic' },
-  { id:'theme_midnight', icon:'◐', name:'Midnight Theme', desc:'A deeper, cleaner profile style with subtle glow.', cost:200, duration:'Permanent', category:'Themes', slot:'theme', rarity:'Rare' },
+  { id:'frame_neon', icon:'◇', name:'Neon Pulse Frame', desc:'A 30-Days purple-pink profile frame.', cost:300, duration:'30 Days', category:'Frames', slot:'frame', featured:true, rarity:'Epic' },
+  { id:'frame_cyber', icon:'⬡', name:'Cyber Edge Frame', desc:'A sharp neon frame for your creator profile.', cost:420, duration:'30 Days', category:'Frames', slot:'frame', rarity:'Legendary' },
+  { id:'badge_challenger', icon:'✦', name:'Challenger Badge', desc:'Show that you are here to compete.', cost:180, duration:'30 Days', category:'Badges', slot:'badge', featured:true, rarity:'Rare' },
+  { id:'badge_chainmaster', icon:'∞', name:'Chain Master Badge', desc:'A premium badge for challenge-chain builders.', cost:360, duration:'30 Days', category:'Badges', slot:'badge', rarity:'Epic' },
+  { id:'theme_galaxy', icon:'✺', name:'Galaxy Theme', desc:'Adds a cosmic accent to your BeatTag profile.', cost:240, duration:'30 Days', category:'Themes', slot:'theme', featured:true, rarity:'Epic' },
+  { id:'theme_midnight', icon:'◐', name:'Midnight Theme', desc:'A deeper, cleaner profile style with subtle glow.', cost:200, duration:'30 Days', category:'Themes', slot:'theme', rarity:'Rare' },
   { id:'boost_24h', icon:'↟', name:'Challenge Boost', desc:'Boost one of your active challenges for 24 hours.', cost:120, duration:'Consumable', category:'Boosts', consumable:true, featured:true, rarity:'Power-up' }
 ];
 
