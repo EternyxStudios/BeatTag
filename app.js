@@ -146,7 +146,7 @@ async function initAuth() {
   const {
     data: { session }
   } = await supabaseClient.auth.getSession();
-
+if (session) {
   await loadRealProfile();
 await checkAdmin();
 
